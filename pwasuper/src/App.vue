@@ -687,8 +687,8 @@ const esRutaAuth = computed(() =>
     <!-- Menú desplegable móvil -->
     <Transition name="menu-slide">
       <div 
-        v-if="isLoggedIn && showMobileMenu" 
-        class="fixed top-[60px] inset-x-0 z-30 bg-green-800 shadow-lg rounded-b-3xl mx-2"
+        v-if="isLoggedIn && showMobileMenu"
+        class="mobile-menu-panel fixed inset-x-0 z-30 bg-green-800 shadow-lg rounded-b-3xl mx-2"
       >
         <div class="px-2 py-3">
           <nav class="space-y-1">
@@ -834,7 +834,7 @@ const esRutaAuth = computed(() =>
     ></div>
 
     <!-- Contenido principal -->
-    <main class="main-content relative z-10" :style="{ paddingTop: isLoggedIn ? '120px' : '0' }">
+    <main class="main-content relative z-10" :class="{ 'has-fixed-header': isLoggedIn }">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -898,6 +898,11 @@ const esRutaAuth = computed(() =>
   position: relative;
   overflow: hidden;
   background-color: #006400; /* Verde fuerte actualizado */
+  /* El header es fixed top-0, así que debe empujarse manualmente por
+     debajo del notch/isla dinámica; el mt-2 original (8px) no bastaba y
+     el logo quedaba tapado por el reloj/batería del celular. */
+  top: max(8px, calc(env(safe-area-inset-top, 0px) + 8px)) !important;
+  margin-top: 0 !important;
 }
 
 /* Optimización del scroll - solo cuando sea necesario */
@@ -910,6 +915,17 @@ const esRutaAuth = computed(() =>
 .main-content {
   flex: 1;
   width: 100%;
+}
+
+/* El contenido debajo del header logueado debe dejar el mismo espacio
+   extra que el header ganó por la zona segura, o quedaría tapado. */
+.main-content.has-fixed-header {
+  padding-top: calc(120px + env(safe-area-inset-top, 0px)) !important;
+}
+
+/* El menú desplegable cuelga del header, así que baja lo mismo que él. */
+.mobile-menu-panel {
+  top: calc(60px + env(safe-area-inset-top, 0px));
 }
 
 .header-decorative::before {

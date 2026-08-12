@@ -77,7 +77,7 @@
       v-if="showBanner" 
       class="fixed left-0 right-0 z-30 shadow-sm transition-all duration-300 rounded-full mx-4"
       :class="getBannerClasses()"
-      :style="{ top: '66px' }"
+      :style="{ top: 'calc(66px + env(safe-area-inset-top, 0px))' }"
     >
       <div class="max-w-4xl mx-auto px-3 sm:px-4 lg:px-6">
         <div class="flex items-center justify-between py-1.5">
