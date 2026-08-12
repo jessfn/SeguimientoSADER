@@ -351,8 +351,8 @@ onMounted(async () => {
       router.push('/login');
     }
   } else {
-    // Si no hay usuario logueado, asegurar que esté en login
-    if (route.name !== 'Login' && route.name !== 'Register') {
+    // Si no hay usuario logueado, asegurar que esté en una ruta pública
+    if (route.name !== 'Login' && route.name !== 'Register' && route.name !== 'ForgotPassword') {
       router.push('/login');
     }
   }
