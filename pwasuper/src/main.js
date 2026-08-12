@@ -5,6 +5,9 @@ import router from './router'
 // Importar estilos (Tailwind CSS y personalizados)
 import './style.css'
 
+// Sistema de diseño de las pantallas de autenticación
+import './styles/auth.css'
+
 // Importar Font Awesome
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'

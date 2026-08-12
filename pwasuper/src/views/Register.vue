@@ -1,651 +1,393 @@
 <template>
-  <div class="apple-register register-mesh-bg relative">
-    <!-- Mesh de fondo: 100% CSS, sin imágenes externas -->
-    <div class="absolute inset-0" aria-hidden="true">
-      <div class="mesh-blob-r blob-r1"></div>
-      <div class="mesh-blob-r blob-r2"></div>
-      <div class="mesh-blob-r blob-r3"></div>
+  <AuthLayout wide max-width="520px" badge="Registro de nuevo usuario"
+              desc="Crea tu cuenta para registrar actividades, asistencias y reportes desde campo."
+              :features="['Alta en minutos', 'Tus datos viajan cifrados', 'Acceso inmediato tras el registro']">
+    <!-- ── Encabezado con progreso ── -->
+    <div class="head">
+      <router-link to="/login" class="back" aria-label="Volver a iniciar sesión">
+        <AuthIcon name="arrow-left" />
+      </router-link>
+      <div class="head-text">
+        <h1>Crear cuenta</h1>
+        <p>Paso {{ step }} de {{ STEPS.length }} · {{ STEPS[step - 1].label }}</p>
+      </div>
     </div>
-    
-    <!-- Success Modal -->
-    <Teleport to="body">
-      <Transition name="modal-scale">
-        <div v-if="showSuccessModal" class="modal-backdrop" @click.self="goToLogin">
-          <div class="modal-container">
-            <div class="modal-success-icon">
-              <svg viewBox="0 0 56 56" fill="none">
-                <circle cx="28" cy="28" r="26" stroke="#34C759" stroke-width="3"/>
-                <path d="M17 28l7 7 15-15" stroke="#34C759" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <h2 class="modal-heading">Registro Exitoso</h2>
-            <p class="modal-description">Tu cuenta ha sido creada correctamente</p>
-            <div class="modal-progress-track">
-              <div class="modal-progress-fill"></div>
-            </div>
-            <p class="modal-redirect-text">Redirigiendo al inicio de sesión...</p>
-            <button @click="goToLogin" class="modal-action-btn">Continuar</button>
+
+    <ol class="steps" :aria-label="`Paso ${step} de ${STEPS.length}`">
+      <li v-for="(s, i) in STEPS" :key="s.label"
+          :class="{ done: step > i + 1, now: step === i + 1 }">
+        <span class="dot">
+          <AuthIcon v-if="step > i + 1" name="check-plain" />
+          <template v-else>{{ i + 1 }}</template>
+        </span>
+        <em>{{ s.short }}</em>
+      </li>
+    </ol>
+
+    <Transition name="au-fade">
+      <div v-if="message.text" class="au-alert" role="alert">
+        <AuthIcon :name="isOnline ? 'alert' : 'wifi-off'" />
+        <span>{{ message.text }}</span>
+      </div>
+    </Transition>
+
+    <form class="au-form" novalidate @submit.prevent="onSubmit">
+      <!-- ══════════ PASO 1 · Datos personales ══════════ -->
+      <template v-if="step === 1">
+        <div class="au-field">
+          <label for="nombre">Nombre(s) <span class="au-req">*</span></label>
+          <div class="au-input">
+            <span class="au-ico"><AuthIcon name="user" /></span>
+            <input id="nombre" v-model="form.nombre" type="text" autocomplete="given-name"
+                   placeholder="NOMBRE(S)" @input="form.nombre = up(form.nombre)" />
           </div>
         </div>
-      </Transition>
-    </Teleport>
 
-    <!-- Main Content -->
-    <div class="register-content relative z-10">
-      <!-- Fixed Navigation Header -->
-      <nav class="register-nav">
-        <div class="nav-container">
-          <router-link to="/login" class="nav-back-btn">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <div class="au-row">
+          <div class="au-field">
+            <label for="ap1">Apellido paterno <span class="au-req">*</span></label>
+            <div class="au-input">
+              <span class="au-ico"><AuthIcon name="user" /></span>
+              <input id="ap1" v-model="form.primerApellido" type="text" autocomplete="family-name"
+                     placeholder="PATERNO" @input="form.primerApellido = up(form.primerApellido)" />
+            </div>
+          </div>
+          <div class="au-field">
+            <label for="ap2">Apellido materno <span class="au-req">*</span></label>
+            <div class="au-input">
+              <span class="au-ico"><AuthIcon name="user" /></span>
+              <input id="ap2" v-model="form.segundoApellido" type="text"
+                     placeholder="MATERNO" @input="form.segundoApellido = up(form.segundoApellido)" />
+            </div>
+          </div>
+        </div>
+
+        <div class="au-field">
+          <label for="curp">CURP <span class="au-req">*</span></label>
+          <div class="au-input" :class="{ 'is-error': curpError, 'is-ok': curpValida }">
+            <span class="au-ico"><AuthIcon name="id" /></span>
+            <input id="curp" v-model="form.curp" type="text" maxlength="18" spellcheck="false"
+                   placeholder="18 CARACTERES" class="mono" @input="formatCurp" />
+            <span v-if="form.curp" class="au-count">{{ form.curp.length }}/18</span>
+          </div>
+          <span v-if="curpError" class="au-hint is-error"><AuthIcon name="x" />{{ curpError }}</span>
+          <span v-else-if="curpValida" class="au-hint is-ok"><AuthIcon name="check" />CURP con formato válido</span>
+          <span v-else class="au-hint">Clave Única de Registro de Población</span>
+        </div>
+      </template>
+
+      <!-- ══════════ PASO 2 · Información laboral ══════════ -->
+      <template v-else-if="step === 2">
+        <div class="au-field">
+          <label for="cargo">Puesto de trabajo <span class="au-req">*</span></label>
+          <div class="au-input">
+            <span class="au-ico"><AuthIcon name="briefcase" /></span>
+            <select id="cargo" v-model="form.cargo">
+              <option value="" disabled>Selecciona tu puesto</option>
+              <option v-for="c in CARGOS" :key="c" :value="c">{{ c }}</option>
+            </select>
+            <svg class="au-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9" />
             </svg>
-            <span>Volver</span>
-          </router-link>
-          <h1 class="nav-title">Crear Cuenta</h1>
-          <div class="nav-spacer"></div>
+          </div>
         </div>
-      </nav>
 
-      <!-- Header Section -->
-      <header class="register-hero">
-        <SaderLogo :size="44" layout="row" :subtitle="false" class="register-brand" />
-        <p class="hero-instruction">Completa el formulario con tus datos personales y laborales para crear tu cuenta en el sistema.</p>
-      </header>
+        <div v-if="form.cargo === 'OTRO'" class="au-field">
+          <label for="cargoOtro">Especifica tu puesto <span class="au-req">*</span></label>
+          <div class="au-input">
+            <span class="au-ico"><AuthIcon name="edit" /></span>
+            <input id="cargoOtro" v-model="form.cargoOtro" type="text"
+                   placeholder="NOMBRE DEL PUESTO" @input="form.cargoOtro = plain(form.cargoOtro)" />
+          </div>
+        </div>
 
-      <!-- Error Alert -->
-      <Transition name="alert-slide">
-        <div v-if="message.text && message.type === 'error'" class="error-alert">
-          <div class="alert-icon">
-            <svg viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <div class="au-field">
+          <label for="territorio">Territorio <span class="au-req">*</span></label>
+          <div class="au-input">
+            <span class="au-ico"><AuthIcon name="pin" /></span>
+            <select id="territorio" v-model="form.territorio">
+              <option value="" disabled>Selecciona tu territorio</option>
+              <option v-for="t in TERRITORIOS" :key="t" :value="t">{{ t }}</option>
+            </select>
+            <svg class="au-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9" />
             </svg>
           </div>
-          <span class="alert-text">{{ message.text }}</span>
-        </div>
-      </Transition>
-
-      <!-- Registration Form -->
-      <form @submit.prevent="register" @keydown.enter="handleEnterKey" class="register-form">
-        
-        <!-- Personal Information -->
-        <div class="form-group">
-          <div class="group-header">
-            <div class="group-icon">
-              <svg viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
-                <path d="M4 20c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <h3 class="group-title">Datos Personales</h3>
-          </div>
-
-          <!-- Email -->
-          <div class="form-field">
-            <label class="field-label">Correo Electrónico</label>
-            <div class="input-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none">
-                <rect x="2" y="4" width="20" height="16" rx="3" stroke="currentColor" stroke-width="2"/>
-                <path d="M2 7l10 6 10-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <input v-model="form.email" type="email" autocomplete="email" required placeholder="tu@email.com"/>
-            </div>
-          </div>
-
-          <!-- Name -->
-          <div class="form-field">
-            <label class="field-label">Nombre(s)</label>
-            <div class="input-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              <input v-model="form.nombre" @input="formatNombre" type="text" required placeholder="NOMBRE(S)" class="uppercase-input"/>
-            </div>
-            <span class="field-hint">Ingresa tu nombre o nombres de pila</span>
-          </div>
-
-          <!-- First Last Name -->
-          <div class="form-field">
-            <label class="field-label">Apellido Paterno</label>
-            <div class="input-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              <input v-model="form.primerApellido" @input="formatPrimerApellido" type="text" required placeholder="APELLIDO PATERNO" class="uppercase-input"/>
-            </div>
-          </div>
-
-          <!-- Second Last Name -->
-          <div class="form-field">
-            <label class="field-label">Apellido Materno</label>
-            <div class="input-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              <input v-model="form.segundoApellido" @input="formatSegundoApellido" type="text" required placeholder="APELLIDO MATERNO" class="uppercase-input"/>
-            </div>
-          </div>
-
-          <!-- CURP -->
-          <div class="form-field">
-            <label class="field-label">CURP</label>
-            <div class="input-wrapper" :class="{ 'has-error': curpError, 'has-success': curpWarning }">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
-                <path d="M7 8h10M7 12h6M7 16h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <input v-model="form.curp" @input="formatCurp" type="text" required maxlength="18" placeholder="CURP (18 CARACTERES)" class="uppercase-input letter-spaced"/>
-              <span v-if="form.curp" class="char-counter">{{ form.curp.length }}/18</span>
-            </div>
-            <span v-if="curpError" class="field-hint error-hint">{{ curpError }}</span>
-            <span v-else-if="curpWarning" class="field-hint success-hint">{{ curpWarning }}</span>
-            <span v-else class="field-hint">Clave Única de Registro de Población</span>
-          </div>
+          <span class="au-hint">Tu área de trabajo asignada</span>
         </div>
 
-        <!-- Work Information -->
-        <div class="form-group">
-          <div class="group-header">
-            <div class="group-icon">
-              <svg viewBox="0 0 24 24" fill="none">
-                <rect x="2" y="7" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
-                <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="currentColor" stroke-width="2"/>
-                <path d="M12 12v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <h3 class="group-title">Información Laboral</h3>
+        <!-- Técnicos: buscador de facilitador -->
+        <div v-if="esTecnico" class="au-field fac">
+          <label>Tu facilitador <span class="au-tag">Obligatorio</span></label>
+
+          <div v-if="facilitadorSeleccionado" class="fac-picked">
+            <span class="fac-avatar">{{ facilitadorSeleccionado.nombre_completo.charAt(0) }}</span>
+            <span class="fac-info">
+              <b>{{ facilitadorSeleccionado.nombre_completo }}</b>
+              <em>
+                {{ facilitadorSeleccionado.curp || '' }}
+                <template v-if="facilitadorSeleccionado.territorio"> · {{ facilitadorSeleccionado.territorio }}</template>
+              </em>
+            </span>
+            <button type="button" class="fac-clear" aria-label="Cambiar facilitador" @click="limpiarFacilitador">
+              <AuthIcon name="x-plain" />
+            </button>
           </div>
 
-          <!-- Territory -->
-          <div class="form-field">
-            <label class="field-label">Territorio</label>
-            <div class="select-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" stroke-width="2"/>
-                <circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              <select v-model="form.territorio" required>
-                <option value="" disabled>Selecciona tu territorio</option>
-                <option v-for="territorio in territoriosSembrandoVida" :key="territorio" :value="territorio">{{ territorio }}</option>
-              </select>
-              <svg class="select-arrow" viewBox="0 0 24 24" fill="none">
-                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+          <template v-else>
+            <div class="au-input au-has-btn">
+              <span class="au-ico"><AuthIcon name="search" /></span>
+              <input v-model="facilitadorQuery" type="text" autocomplete="off"
+                     placeholder="Busca por nombre o CURP…"
+                     @input="buscarFacilitadoresRT" @focus="mostrarResultados = true" />
+              <span v-if="buscandoFacilitador" class="au-input-btn"><i class="au-spin-sm"></i></span>
             </div>
-            <span v-if="territorioError" class="field-hint error-hint">{{ territorioError }}</span>
-            <span v-else class="field-hint">Selecciona tu área de trabajo</span>
-          </div>
 
-          <!-- Position -->
-          <div class="form-field">
-            <label class="field-label">Puesto de Trabajo</label>
-            <div class="select-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none">
-                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-              </svg>
-              <select v-model="form.cargo" required>
-                <option value="" disabled>Selecciona tu puesto</option>
-                <option v-for="cargo in cargosDisponibles" :key="cargo" :value="cargo">{{ cargo }}</option>
-              </select>
-              <svg class="select-arrow" viewBox="0 0 24 24" fill="none">
-                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+            <div v-if="mostrarResultados && facilitadorQuery.trim().length >= 2" class="fac-results">
+              <p v-if="buscandoFacilitador" class="fac-state">
+                <i class="au-spin-sm"></i> Buscando facilitadores…
+              </p>
+              <p v-else-if="!facilitadoresEncontrados.length" class="fac-state">
+                Sin resultados para “{{ facilitadorQuery.trim() }}”
+              </p>
+              <ul v-else>
+                <li v-for="f in facilitadoresEncontrados" :key="f.admin_id">
+                  <button type="button" @click="seleccionarFacilitador(f)">
+                    <span class="fac-avatar sm">{{ f.nombre_completo.charAt(0) }}</span>
+                    <span class="fac-info">
+                      <b>{{ f.nombre_completo }}</b>
+                      <em>
+                        {{ f.curp || '' }}
+                        <template v-if="f.territorio"> · {{ f.territorio }}</template>
+                      </em>
+                    </span>
+                  </button>
+                </li>
+              </ul>
             </div>
-          </div>
-
-          <!-- Other Position -->
-          <Transition name="field-expand">
-            <div v-if="form.cargo === 'OTRO'" class="form-field">
-              <label class="field-label">Especifica tu cargo</label>
-              <div class="input-wrapper">
-                <svg class="input-icon" viewBox="0 0 24 24" fill="none">
-                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <input v-model="form.cargoOtro" @input="formatCargoOtro" type="text" required placeholder="NOMBRE DEL CARGO" class="uppercase-input"/>
-              </div>
-            </div>
-          </Transition>
-
-          <!-- Facilitador (solo para técnicos) -->
-          <Transition name="field-expand">
-            <div v-if="esTecnico" class="form-field facilitador-search-field">
-              <label class="field-label">
-                Busca tu Facilitador
-                <span class="field-label-badge">Obligatorio</span>
-              </label>
-              <div class="input-wrapper" :class="{ 'has-success': facilitadorSeleccionado }">
-                <svg class="input-icon" viewBox="0 0 24 24" fill="none">
-                  <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
-                  <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                <input
-                  v-model="facilitadorQuery"
-                  @input="buscarFacilitadoresRT"
-                  @focus="mostrarResultadosFacilitador = true"
-                  type="text"
-                  :placeholder="facilitadorSeleccionado ? '' : 'Busca por nombre o CURP...'"
-                  class="uppercase-input"
-                  autocomplete="off"
-                />
-                <div v-if="buscandoFacilitador" class="input-spinner"></div>
-                <button v-if="facilitadorSeleccionado" type="button" @click="limpiarFacilitador" class="facilitador-clear-btn" title="Cambiar facilitador">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
-                </button>
-              </div>
-              <!-- Facilitador seleccionado -->
-              <div v-if="facilitadorSeleccionado" class="facilitador-selected-card">
-                <div class="facilitador-avatar">{{ facilitadorSeleccionado.nombre_completo.charAt(0) }}</div>
-                <div class="facilitador-selected-info">
-                  <span class="facilitador-selected-name">{{ facilitadorSeleccionado.nombre_completo }}</span>
-                  <span class="facilitador-selected-meta">
-                    <span v-if="facilitadorSeleccionado.curp">{{ facilitadorSeleccionado.curp }}</span>
-                    <span v-if="facilitadorSeleccionado.territorio"> · {{ facilitadorSeleccionado.territorio }}</span>
-                  </span>
-                </div>
-                <svg class="facilitador-check" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                  <path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-              <!-- Resultados de búsqueda -->
-              <Transition name="dropdown-fade">
-                <div v-if="mostrarResultadosFacilitador && !facilitadorSeleccionado && facilitadorQuery.length >= 2" class="facilitador-results">
-                  <div v-if="buscandoFacilitador" class="facilitador-results-loading">
-                    <div class="input-spinner" style="position:static;margin-right:8px;"></div>
-                    <span>Buscando facilitadores...</span>
-                  </div>
-                  <div v-else-if="facilitadoresEncontrados.length === 0" class="facilitador-results-empty">
-                    <svg viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
-                      <path d="M8 15s1.5-2 4-2 4 2 4 2M9 9h.01M15 9h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
-                    <span>No se encontraron facilitadores</span>
-                  </div>
-                  <ul v-else class="facilitador-results-list">
-                    <li v-for="fac in facilitadoresEncontrados" :key="fac.admin_id" @click="seleccionarFacilitador(fac)" class="facilitador-result-item">
-                      <div class="facilitador-avatar">{{ fac.nombre_completo.charAt(0) }}</div>
-                      <div class="facilitador-result-info">
-                        <span class="facilitador-result-name">{{ fac.nombre_completo }}</span>
-                        <span class="facilitador-result-meta">
-                          {{ fac.curp || '' }}
-                          <span v-if="fac.territorio"> · {{ fac.territorio }}</span>
-                        </span>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </Transition>
-              <span v-if="!facilitadorSeleccionado" class="field-hint">Escribe al menos 2 caracteres para buscar tu facilitador</span>
-              <span v-else class="field-hint success-hint">
-                <svg viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
-                  <path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Facilitador seleccionado correctamente
-              </span>
-            </div>
-          </Transition>
-
-          <!-- Supervisor (solo para NO técnicos) -->
-          <Transition name="field-expand">
-            <div v-if="!esTecnico" class="form-field">
-              <label class="field-label">Supervisor Inmediato</label>
-              <div class="input-wrapper">
-                <svg class="input-icon" viewBox="0 0 24 24" fill="none">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-                  <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                <input v-model="form.supervisor" @input="formatSupervisor" type="text" required placeholder="NOMBRE DEL SUPERVISOR" class="uppercase-input"/>
-              </div>
-              <span class="field-hint">Nombre completo de tu jefe directo</span>
-            </div>
-          </Transition>
+            <span class="au-hint">Escribe al menos 2 caracteres para buscar</span>
+          </template>
         </div>
 
-        <!-- Contact Information -->
-        <div class="form-group">
-          <div class="group-header">
-            <div class="group-icon">
-              <svg viewBox="0 0 24 24" fill="none">
-                <rect x="5" y="2" width="14" height="20" rx="3" stroke="currentColor" stroke-width="2"/>
-                <path d="M12 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <h3 class="group-title">Contacto</h3>
+        <!-- No técnicos: supervisor manual -->
+        <div v-else class="au-field">
+          <label for="supervisor">Supervisor inmediato <span class="au-req">*</span></label>
+          <div class="au-input">
+            <span class="au-ico"><AuthIcon name="users" /></span>
+            <input id="supervisor" v-model="form.supervisor" type="text"
+                   placeholder="NOMBRE DEL SUPERVISOR" @input="form.supervisor = plain(form.supervisor)" />
           </div>
+          <span class="au-hint">Nombre completo de tu jefe directo</span>
+        </div>
+      </template>
 
-          <!-- Phone -->
-          <div class="form-field">
-            <label class="field-label">Número de Teléfono</label>
-            <div class="phone-field">
-              <!-- Country Code Selector -->
-              <div class="country-code-selector">
-                <button type="button" @click="showCountrySelector = !showCountrySelector" class="country-trigger">
-                  <span class="country-code-text">{{ paises.find(p => p.codigo === form.codigoPais)?.abrev || 'MX' }}</span>
-                  <span class="country-dial">{{ form.codigoPais }}</span>
-                  <svg class="country-arrow" viewBox="0 0 24 24" fill="none">
-                    <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-                
-                <Transition name="dropdown-fade">
-                  <div v-if="showCountrySelector" class="country-panel">
-                    <div class="country-search-box">
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
-                        <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      </svg>
-                      <input type="text" v-model="countrySearch" placeholder="Buscar país..." @click.stop/>
-                    </div>
-                    <ul class="country-options">
-                      <li v-for="pais in filteredCountries" :key="pais.codigo" @click="selectCountry(pais)" class="country-option">
-                        <span class="country-abbr">{{ pais.abrev }}</span>
-                        <span class="country-name">{{ pais.nombre }}</span>
-                        <span class="country-dial-code">{{ pais.codigo }}</span>
-                      </li>
-                      <li v-if="filteredCountries.length === 0" class="country-empty">Sin resultados</li>
-                    </ul>
-                  </div>
-                </Transition>
-              </div>
-              
-              <!-- Phone Input -->
-              <div class="input-wrapper phone-input-wrapper">
-                <input v-model="form.telefono" type="tel" required maxlength="10" pattern="[0-9]{10}" placeholder="10 dígitos" @input="validatePhone"/>
-              </div>
-            </div>
-            <span class="field-hint">Solo los 10 dígitos sin lada</span>
+      <!-- ══════════ PASO 3 · Contacto y acceso ══════════ -->
+      <template v-else-if="step === 3">
+        <div class="au-field">
+          <label for="email">Correo electrónico <span class="au-req">*</span></label>
+          <div class="au-input">
+            <span class="au-ico"><AuthIcon name="mail" /></span>
+            <input id="email" v-model.trim="form.email" type="email" inputmode="email"
+                   autocomplete="email" placeholder="nombre@ejemplo.com" />
           </div>
+          <span class="au-hint">Lo usarás para iniciar sesión</span>
         </div>
 
-        <!-- Security -->
-        <div class="form-group">
-          <div class="group-header">
-            <div class="group-icon">
-              <svg viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/>
-                <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <h3 class="group-title">Seguridad</h3>
-          </div>
-
-          <!-- Password -->
-          <div class="form-field">
-            <label class="field-label">Contraseña <span class="required-mark">*</span></label>
-            <div class="input-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/>
-                <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" stroke-width="2"/>
-                <circle cx="12" cy="16" r="1.5" fill="currentColor"/>
-              </svg>
-              <input v-model="form.password" @input="checkPasswordsMatch" :type="showPassword ? 'text' : 'password'" required minlength="6" placeholder="Mínimo 6 caracteres"/>
-              <button type="button" @click="togglePasswordVisibility" class="visibility-toggle">
-                <svg v-if="showPassword" viewBox="0 0 24 24" fill="none">
-                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  <path d="M1 1l22 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                <svg v-else viewBox="0 0 24 24" fill="none">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/>
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+        <div class="au-field">
+          <label for="tel">Teléfono <span class="au-req">*</span></label>
+          <div class="phone">
+            <div class="phone-cc" :class="{ open: showPaises }">
+              <button type="button" class="phone-cc-btn" @click.stop="showPaises = !showPaises">
+                <b>{{ paisActual.abrev }}</b>
+                <span>{{ form.codigoPais }}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
+              <div v-if="showPaises" class="phone-cc-menu" @click.stop>
+                <div class="au-input">
+                  <span class="au-ico"><AuthIcon name="search" /></span>
+                  <input v-model="paisQuery" type="text" placeholder="Buscar país…" />
+                </div>
+                <ul>
+                  <li v-for="p in paisesFiltrados" :key="p.codigo">
+                    <button type="button" @click="selectPais(p)">
+                      <b>{{ p.abrev }}</b><span>{{ p.nombre }}</span><em>{{ p.codigo }}</em>
+                    </button>
+                  </li>
+                  <li v-if="!paisesFiltrados.length" class="empty">Sin resultados</li>
+                </ul>
+              </div>
             </div>
-            <span class="field-hint">Usa al menos 6 caracteres</span>
-          </div>
 
-          <!-- Confirm Password -->
-          <div class="form-field">
-            <label class="field-label">Confirmar Contraseña <span class="required-mark">*</span></label>
-            <div class="input-wrapper" :class="{ 'has-error': !passwordsMatch && form.confirmPassword.length > 0, 'has-success': passwordsMatch && form.confirmPassword.length >= 6 }">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none">
-                <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              <input v-model="form.confirmPassword" @input="checkPasswordsMatch" :type="showConfirmPassword ? 'text' : 'password'" required minlength="6" placeholder="Repite tu contraseña"/>
-              <button type="button" @click="toggleConfirmPasswordVisibility" class="visibility-toggle">
-                <svg v-if="showConfirmPassword" viewBox="0 0 24 24" fill="none">
-                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  <path d="M1 1l22 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                <svg v-else viewBox="0 0 24 24" fill="none">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/>
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-                </svg>
-              </button>
+            <div class="au-input phone-num">
+              <span class="au-ico"><AuthIcon name="phone" /></span>
+              <input id="tel" v-model="form.telefono" type="tel" inputmode="numeric" maxlength="10"
+                     autocomplete="tel-national" placeholder="10 dígitos" @input="validatePhone" />
             </div>
-            <span v-if="!passwordsMatch && form.confirmPassword.length > 0" class="field-hint error-hint">Las contraseñas no coinciden</span>
-            <span v-else-if="passwordsMatch && form.confirmPassword.length >= 6" class="field-hint success-hint">
-              <svg viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              Las contraseñas coinciden
-            </span>
+          </div>
+          <span class="au-hint">Solo los 10 dígitos, sin lada</span>
+        </div>
+
+        <div class="au-field">
+          <label for="pass">Contraseña <span class="au-req">*</span></label>
+          <div class="au-input au-has-btn">
+            <span class="au-ico"><AuthIcon name="lock" /></span>
+            <input id="pass" v-model="form.password" :type="showPass ? 'text' : 'password'"
+                   autocomplete="new-password" placeholder="Mínimo 6 caracteres" />
+            <button type="button" class="au-input-btn" tabindex="-1"
+                    :aria-label="showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                    @click="showPass = !showPass">
+              <AuthIcon :name="showPass ? 'eye-off' : 'eye'" />
+            </button>
+          </div>
+          <div v-if="form.password" class="meter">
+            <span :class="['meter-bar', `lv-${fuerza.nivel}`]"><i :style="{ width: fuerza.pct + '%' }"></i></span>
+            <em :class="`lv-${fuerza.nivel}`">{{ fuerza.texto }}</em>
           </div>
         </div>
 
-        <!-- Privacy Agreement -->
-        <div class="form-group privacy-agreement">
-          <div class="privacy-container">
-            <div class="privacy-header">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <h4>Aviso de Privacidad</h4>
-            </div>
-            
-            <div class="privacy-scroll-area">
-              <p class="privacy-title-text">AVISO DE PRIVACIDAD PARA EL REGISTRO Y USO DE INFORMACIÓN DE LOS TÉCNICOS DEL PROGRAMA SEMBRANDO VIDA MEDIANTE APLICACIÓN MÓVIL OFICIAL</p>
-              <p>En cumplimiento con lo dispuesto por la Ley General de Transparencia y Acceso a la Información pública y la Ley Federal de Transparencia y Acceso a la Información Pública, se informa a las y los Técnico(a)s del Programa Sembrando Vida que los datos personales recabados serán tratados conforme a los siguientes términos:</p>
-              <p class="privacy-section-title">1. Identidad y domicilio del responsable</p>
-              <p>El responsable del tratamiento de los datos personales es la Secretaría de Bienestar, Subsecretaria de Inclusión Productiva y Desarrollo Rural con domicilio en: Av. P.º de la Reforma 116, Juárez, Cuauhtémoc, 06600 Ciudad de México, CDMX.</p>
-              <p class="privacy-section-title">2. Datos personales que se recaban</p>
-              <p>Nombre completo, CURP, Número telefónico, Correo electrónico, Cargo y supervisor asignado, Datos de localización geográfica precisa, Actividades realizadas en campo y fotografías.</p>
-              <p class="privacy-section-title">3. Finalidades del tratamiento</p>
-              <p>Los datos serán utilizados exclusivamente para registrar actividades de técnicos, documentar avances del programa y elaborar reportes internos.</p>
-              <p class="privacy-date">Fecha de última actualización: 12 de agosto del 2025.</p>
-              <p class="privacy-accept-text">Al proporcionar mis datos personales, acepto el tratamiento conforme al Aviso de Privacidad.</p>
-            </div>
-            
-            <label class="checkbox-field">
-              <input v-model="termsAccepted" @change="clearTermsError" type="checkbox" required/>
-              <span class="checkbox-indicator">
-                <svg viewBox="0 0 16 16" fill="none">
-                  <path d="M3.5 8l3 3 6-6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </span>
-              <span class="checkbox-text">He leído y acepto el Aviso de Privacidad y los Términos y Condiciones <span class="required-mark">*</span></span>
-            </label>
-            <Transition name="hint-fade">
-              <span v-if="termsError" class="field-hint error-hint terms-error-hint">{{ termsError }}</span>
-            </Transition>
+        <div class="au-field">
+          <label for="pass2">Confirmar contraseña <span class="au-req">*</span></label>
+          <div class="au-input au-has-btn"
+               :class="{ 'is-error': form.confirmPassword && !passwordsMatch, 'is-ok': form.confirmPassword && passwordsMatch }">
+            <span class="au-ico"><AuthIcon name="check" /></span>
+            <input id="pass2" v-model="form.confirmPassword" :type="showPass2 ? 'text' : 'password'"
+                   autocomplete="new-password" placeholder="Repite tu contraseña" />
+            <button type="button" class="au-input-btn" tabindex="-1"
+                    :aria-label="showPass2 ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                    @click="showPass2 = !showPass2">
+              <AuthIcon :name="showPass2 ? 'eye-off' : 'eye'" />
+            </button>
+          </div>
+          <span v-if="form.confirmPassword && !passwordsMatch" class="au-hint is-error">
+            <AuthIcon name="x" />Las contraseñas no coinciden
+          </span>
+          <span v-else-if="form.confirmPassword && passwordsMatch" class="au-hint is-ok">
+            <AuthIcon name="check" />Las contraseñas coinciden
+          </span>
+        </div>
+      </template>
+
+      <!-- ══════════ PASO 4 · Revisión y privacidad ══════════ -->
+      <template v-else>
+        <div class="review">
+          <h2>Revisa tus datos</h2>
+          <dl>
+            <div><dt>Nombre</dt><dd>{{ nombreCompleto }}</dd></div>
+            <div><dt>CURP</dt><dd class="mono">{{ form.curp }}</dd></div>
+            <div><dt>Puesto</dt><dd>{{ cargoFinal }}</dd></div>
+            <div><dt>Territorio</dt><dd>{{ form.territorio }}</dd></div>
+            <div><dt>{{ esTecnico ? 'Facilitador' : 'Supervisor' }}</dt><dd>{{ form.supervisor || '—' }}</dd></div>
+            <div><dt>Correo</dt><dd>{{ form.email }}</dd></div>
+            <div><dt>Teléfono</dt><dd>{{ form.codigoPais }} {{ form.telefono }}</dd></div>
+          </dl>
+          <button type="button" class="review-edit" @click="step = 1">
+            <AuthIcon name="edit" />Corregir datos
+          </button>
+        </div>
+
+        <div class="privacy">
+          <div class="privacy-head">
+            <AuthIcon name="shield" />
+            <h3>Aviso de Privacidad</h3>
+          </div>
+          <div class="privacy-body">
+            <p><b>AVISO DE PRIVACIDAD PARA EL REGISTRO Y USO DE INFORMACIÓN MEDIANTE LA APLICACIÓN MÓVIL DE SEGUIMIENTO</b></p>
+            <p>Los datos personales que proporciones a través de esta aplicación serán tratados conforme a la normativa aplicable en materia de protección de datos personales y transparencia.</p>
+            <p class="privacy-h">1. Datos que se recaban</p>
+            <p>Nombre completo, CURP, número telefónico, correo electrónico, puesto y supervisor asignado, territorio, datos de localización geográfica, actividades realizadas en campo y fotografías.</p>
+            <p class="privacy-h">2. Finalidades del tratamiento</p>
+            <p>Los datos se utilizan exclusivamente para registrar y dar seguimiento a las actividades del personal en campo, documentar avances y elaborar reportes internos.</p>
+            <p class="privacy-h">3. Derechos</p>
+            <p>Puedes solicitar el acceso, rectificación, cancelación u oposición al tratamiento de tus datos personales ante el área responsable.</p>
           </div>
         </div>
 
-        <!-- Submit Button -->
-        <button type="submit" :disabled="loading || !termsAccepted || !passwordsMatch || !isFormComplete" class="submit-btn" :class="{ 'is-loading': loading, 'is-disabled': !termsAccepted || !passwordsMatch || !isFormComplete }">
-          <Transition name="btn-fade" mode="out-in">
-            <span v-if="loading" key="loading" class="btn-inner">
-              <div class="btn-loader"></div>
-              <span>Creando cuenta...</span>
-            </span>
-            <span v-else-if="!isFormComplete" key="incomplete" class="btn-inner">
-              <svg viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                <path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span>Completa todos los campos</span>
-            </span>
-            <span v-else-if="!termsAccepted" key="locked" class="btn-inner">
-              <svg viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/>
-                <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              <span>Acepta los términos</span>
-            </span>
-            <span v-else-if="!passwordsMatch" key="mismatch" class="btn-inner">
-              <svg viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                <path d="M15 9l-6 6m0-6l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span>Las contraseñas deben coincidir</span>
-            </span>
-            <span v-else key="ready" class="btn-inner">
-              <span>Crear mi cuenta</span>
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M5 12h14m-6-6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-          </Transition>
+        <label class="check" :class="{ 'is-error': termsError }">
+          <input v-model="termsAccepted" type="checkbox" @change="termsError = ''" />
+          <span class="check-box"><AuthIcon name="check-plain" /></span>
+          <span class="check-text">
+            He leído y acepto el Aviso de Privacidad y los Términos y Condiciones <span class="au-req">*</span>
+          </span>
+        </label>
+        <span v-if="termsError" class="au-hint is-error"><AuthIcon name="x" />{{ termsError }}</span>
+      </template>
+
+      <!-- ── Navegación ── -->
+      <div class="nav">
+        <button v-if="step > 1" type="button" class="au-btn au-btn-ghost nav-back"
+                :disabled="loading" @click="prev">
+          <AuthIcon name="arrow-left" />Atrás
         </button>
-      </form>
 
-      <!-- Footer -->
-      <footer class="register-footer">
-        <p>¿Ya tienes una cuenta? <router-link to="/login">Iniciar sesión</router-link></p>
-      </footer>
+        <button type="submit" class="au-btn au-btn-primary" :disabled="loading || (step === STEPS.length && !termsAccepted)">
+          <span v-if="loading" class="au-spin"></span>
+          <span>{{ loading ? 'Creando cuenta…' : (step === STEPS.length ? 'Crear mi cuenta' : 'Continuar') }}</span>
+          <AuthIcon v-if="!loading" name="arrow-right" class="au-btn-arrow" />
+        </button>
+      </div>
+    </form>
+
+    <div class="au-links">
+      <p>¿Ya tienes una cuenta? <router-link to="/login">Iniciar sesión</router-link></p>
     </div>
-  </div>
+  </AuthLayout>
+
+  <!-- ── Modal de éxito ── -->
+  <Teleport to="body">
+    <Transition name="pop">
+      <div v-if="showSuccessModal" class="ok-back" @click.self="goToLogin">
+        <div class="ok-card" role="dialog" aria-modal="true">
+          <span class="ok-ring"><AuthIcon name="check-plain" /></span>
+          <h2>¡Cuenta creada!</h2>
+          <p>Tu registro se completó correctamente.</p>
+          <div class="ok-bar"><i></i></div>
+          <p class="ok-note">Redirigiendo al inicio de sesión…</p>
+          <button class="au-btn au-btn-primary" @click="goToLogin">Continuar</button>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, computed, watch, Teleport, Transition } from 'vue';
+import { reactive, ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { apiService } from '../services/apiService.js';
 import { checkInternetConnection, getOfflineMessage } from '../utils/network.js';
-import SaderLogo from '../components/SaderLogo.vue';
+import AuthLayout from '../components/auth/AuthLayout.vue';
+import AuthIcon from '../components/auth/AuthIcon.vue';
 
 const router = useRouter();
-const loading = ref(false);
-const message = reactive({ text: '', type: '' });
-const isOnline = ref(true);
-const curpError = ref('');
-const curpWarning = ref('');
-const currentApiUrl = ref('');
-const termsAccepted = ref(false);
-const termsError = ref('');
-const showSuccessModal = ref(false);
-const countrySearch = ref('');
-const showPassword = ref(false);
-const showConfirmPassword = ref(false);
-const passwordsMatch = ref(true);
 
-const form = reactive({
-  email: '',
-  nombre: '',
-  primerApellido: '',
-  segundoApellido: '',
-  cargo: '',
-  cargoOtro: '',
-  curp: '',
-  territorio: '',
-  supervisor: '',
-  codigoPais: '+52',
-  telefono: '',
-  password: '',
-  confirmPassword: ''
-});
-
-const cargosDisponibles = [
-  'TECNICO PRODUCTIVO',
-  'TECNICO SOCIAL',
-  'FACILITADOR COMUNITARIO',
-  'COORDINACION TERRITORIAL C',
-  'COORDINACION TERRITORIAL B',
-  'COORDINACION TERRITORIAL A',
-  'ESPECIALISTAS PRODUCTIVOS Y SOCIALES',
-  'SEMBRADOR',
-  'OTRO'
+const STEPS = [
+  { label: 'Datos personales', short: 'Datos' },
+  { label: 'Información laboral', short: 'Trabajo' },
+  { label: 'Contacto y acceso', short: 'Acceso' },
+  { label: 'Revisión y privacidad', short: 'Revisar' },
 ];
 
-const buscandoSupervisor = ref(false);
-
-// Facilitador search state
-const facilitadorQuery = ref('');
-const facilitadoresEncontrados = ref([]);
-const facilitadorSeleccionado = ref(null);
-const buscandoFacilitador = ref(false);
-const mostrarResultadosFacilitador = ref(false);
-let _facilitadorDebounce = null;
-
-const esTecnico = computed(() => {
-  const cargoUpper = (form.cargo || '').toUpperCase();
-  return cargoUpper === 'TECNICO SOCIAL' || cargoUpper === 'TECNICO PRODUCTIVO';
-});
-
-const isFormComplete = computed(() => {
-  // Validar campos básicos
-  const basicFieldsFilled = 
-    form.email.trim() !== '' &&
-    form.nombre.trim() !== '' &&
-    form.primerApellido.trim() !== '' &&
-    form.segundoApellido.trim() !== '' &&
-    form.cargo.trim() !== '' &&
-    form.curp.trim() !== '' &&
-    form.territorio.trim() !== '' &&
-    form.telefono.trim() !== '' &&
-    form.password.trim() !== '' &&
-    form.confirmPassword.trim() !== '';
-  
-  // Si el cargo es "OTRO", también debe llenar cargoOtro
-  const cargoOtroFilled = form.cargo.toUpperCase() === 'OTRO' 
-    ? form.cargoOtro.trim() !== '' 
-    : true;
-  
-  // Si es técnico, necesita facilitador seleccionado; si no, supervisor
-  const supervisorOk = esTecnico.value
-    ? !!facilitadorSeleccionado.value
-    : form.supervisor.trim() !== '';
-  
-  return basicFieldsFilled && cargoOtroFilled && supervisorOk;
-});
-
-const territoriosSembrandoVida = [
-  'Acapulco - Centro - Norte - Tierra Caliente',
-  'Acayucan',
-  'Balancán',
-  'Chihuahua / Sonora',
-  'Colima',
-  'Comalcalco',
-  'Córdoba',
-  'Costa Chica - Montaña',
-  'Costa Grande - Sierra',
-  'Durango / Zacatecas',
-  'Hidalgo',
-  'Istmo',
-  'Michoacán',
-  'Mixteca',
-  'Morelos',
-  'Nayarit / Jalisco',
-  'Ocosingo',
-  'Palenque',
-  'Papantla',
-  'Pichucalco',
-  'Puebla',
-  'San Luis Potosí',
-  'Sinaloa',
-  'Tamaulipas',
-  'Tantoyuca',
-  'Tapachula',
-  'Teapa',
-  'Tlaxcala / Estado de México',
-  'Tzucacab / Opb',
-  'Xpujil',
-  'Oficinas Centrales'
+const CARGOS = [
+  'TECNICO PRODUCTIVO', 'TECNICO SOCIAL', 'FACILITADOR COMUNITARIO',
+  'COORDINACION TERRITORIAL C', 'COORDINACION TERRITORIAL B', 'COORDINACION TERRITORIAL A',
+  'ESPECIALISTAS PRODUCTIVOS Y SOCIALES', 'SEMBRADOR', 'OTRO',
 ];
 
-const territorioError = ref('');
+const TERRITORIOS = [
+  'Acapulco - Centro - Norte - Tierra Caliente', 'Acayucan', 'Balancán',
+  'Chihuahua / Sonora', 'Colima', 'Comalcalco', 'Córdoba', 'Costa Chica - Montaña',
+  'Costa Grande - Sierra', 'Durango / Zacatecas', 'Hidalgo', 'Istmo', 'Michoacán',
+  'Mixteca', 'Morelos', 'Nayarit / Jalisco', 'Ocosingo', 'Palenque', 'Papantla',
+  'Pichucalco', 'Puebla', 'San Luis Potosí', 'Sinaloa', 'Tamaulipas', 'Tantoyuca',
+  'Tapachula', 'Teapa', 'Tlaxcala / Estado de México', 'Tzucacab / Opb', 'Xpujil',
+  'Oficinas Centrales',
+];
 
-const paises = [
+const PAISES = [
   { codigo: '+52', nombre: 'México', abrev: 'MX' },
   { codigo: '+1', nombre: 'Estados Unidos', abrev: 'US' },
   { codigo: '+34', nombre: 'España', abrev: 'ES' },
@@ -655,87 +397,109 @@ const paises = [
   { codigo: '+51', nombre: 'Perú', abrev: 'PE' },
   { codigo: '+591', nombre: 'Bolivia', abrev: 'BO' },
   { codigo: '+502', nombre: 'Guatemala', abrev: 'GT' },
-  { codigo: '+503', nombre: 'El Salvador', abrev: 'SV' }
+  { codigo: '+503', nombre: 'El Salvador', abrev: 'SV' },
 ];
 
-const showCountrySelector = ref(false);
+const step = ref(1);
+const loading = ref(false);
+const isOnline = ref(true);
+const message = reactive({ text: '', type: '' });
+const showSuccessModal = ref(false);
 
-const filteredCountries = computed(() => {
-  if (!countrySearch.value) return paises;
-  const searchTerm = countrySearch.value.toLowerCase();
-  return paises.filter(pais => 
-    pais.nombre.toLowerCase().includes(searchTerm) || 
-    pais.codigo.includes(searchTerm)
-  );
+const form = reactive({
+  email: '', nombre: '', primerApellido: '', segundoApellido: '',
+  cargo: '', cargoOtro: '', curp: '', territorio: '', supervisor: '',
+  codigoPais: '+52', telefono: '', password: '', confirmPassword: '',
 });
 
-watch(() => form.cargo, (nuevoCargo, viejoCargo) => {
-  if (nuevoCargo !== viejoCargo) {
-    if (viejoCargo === 'OTRO' && nuevoCargo !== 'OTRO') {
-      form.cargoOtro = '';
-    }
-    // Si deja de ser técnico, limpiar facilitador y resetear supervisor
-    const cargoUpper = (nuevoCargo || '').toUpperCase();
-    const esNuevoTecnico = cargoUpper === 'TECNICO SOCIAL' || cargoUpper === 'TECNICO PRODUCTIVO';
-    if (!esNuevoTecnico) {
-      limpiarFacilitador();
-      form.supervisor = '';
-    }
-  }
+const curpError = ref('');
+const termsAccepted = ref(false);
+const termsError = ref('');
+const showPass = ref(false);
+const showPass2 = ref(false);
+
+/* ── Helpers de formato ── */
+const up = s => (s || '').toUpperCase();
+const DIACRITICOS = new RegExp('[\u0300-\u036f]', 'g');
+const plain = s => up(s).normalize('NFD').replace(DIACRITICOS, '');
+
+const esTecnico = computed(() => ['TECNICO SOCIAL', 'TECNICO PRODUCTIVO'].includes(up(form.cargo)));
+const curpValida = computed(() => /^[A-Z0-9]{18}$/.test(form.curp));
+const passwordsMatch = computed(() => form.password === form.confirmPassword);
+const nombreCompleto = computed(() =>
+  `${form.nombre} ${form.primerApellido} ${form.segundoApellido}`.replace(/\s+/g, ' ').trim());
+const cargoFinal = computed(() => (form.cargo === 'OTRO' ? form.cargoOtro : form.cargo));
+
+const fuerza = computed(() => {
+  const p = form.password;
+  let n = 0;
+  if (p.length >= 6) n++;
+  if (p.length >= 10) n++;
+  if (/[A-Z]/.test(p) && /[a-z]/.test(p)) n++;
+  if (/\d/.test(p) && /[^A-Za-z0-9]/.test(p)) n++;
+  if (p.length < 6) return { nivel: 0, pct: 20, texto: 'Muy corta (mínimo 6)' };
+  return [
+    { nivel: 1, pct: 35, texto: 'Débil' },
+    { nivel: 2, pct: 60, texto: 'Aceptable' },
+    { nivel: 3, pct: 80, texto: 'Buena' },
+    { nivel: 4, pct: 100, texto: 'Excelente' },
+  ][n - 1];
 });
 
-onMounted(async () => {
-  isOnline.value = await checkInternetConnection();
-  if (!isOnline.value) {
-    message.text = getOfflineMessage();
-    message.type = 'error';
-  } else {
-    try {
-      await apiService.refreshApiUrl();
-      currentApiUrl.value = apiService.getCurrentApiUrl();
-    } catch (error) {
-      console.warn('Error inicializando servicio API:', error);
-    }
-  }
-  document.addEventListener('click', closeCountrySelector);
-  document.addEventListener('keydown', handleEscKey);
-});
-
-function togglePasswordVisibility() {
-  showPassword.value = !showPassword.value;
-}
-
-function toggleConfirmPasswordVisibility() {
-  showConfirmPassword.value = !showConfirmPassword.value;
-}
-
-function checkPasswordsMatch() {
-  if (form.confirmPassword.length > 0) {
-    passwordsMatch.value = form.password === form.confirmPassword;
-  } else {
-    passwordsMatch.value = true;
+function formatCurp() {
+  form.curp = up(form.curp);
+  curpError.value = '';
+  if (form.curp.length && form.curp.length < 18) {
+    curpError.value = `Faltan ${18 - form.curp.length} caracteres`;
+  } else if (form.curp.length === 18 && !curpValida.value) {
+    curpError.value = 'Solo letras mayúsculas y números';
   }
 }
 
-// ==================== FACILITADOR SEARCH ====================
+function validatePhone() {
+  form.telefono = form.telefono.replace(/\D/g, '').slice(0, 10);
+}
+
+/* ── Selector de país ── */
+const showPaises = ref(false);
+const paisQuery = ref('');
+const paisActual = computed(() => PAISES.find(p => p.codigo === form.codigoPais) || PAISES[0]);
+const paisesFiltrados = computed(() => {
+  const q = paisQuery.value.trim().toLowerCase();
+  if (!q) return PAISES;
+  return PAISES.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.includes(q));
+});
+function selectPais(p) {
+  form.codigoPais = p.codigo;
+  showPaises.value = false;
+  paisQuery.value = '';
+}
+
+/* ── Búsqueda de facilitador ── */
+const facilitadorQuery = ref('');
+const facilitadoresEncontrados = ref([]);
+const facilitadorSeleccionado = ref(null);
+const buscandoFacilitador = ref(false);
+const mostrarResultados = ref(false);
+let debounceId = null;
 
 function buscarFacilitadoresRT() {
-  facilitadorQuery.value = facilitadorQuery.value.toUpperCase();
+  facilitadorQuery.value = up(facilitadorQuery.value);
   const q = facilitadorQuery.value.trim();
-  
+  mostrarResultados.value = true;
+
+  clearTimeout(debounceId);
   if (q.length < 2) {
     facilitadoresEncontrados.value = [];
+    buscandoFacilitador.value = false;
     return;
   }
-  
-  clearTimeout(_facilitadorDebounce);
-  _facilitadorDebounce = setTimeout(async () => {
-    buscandoFacilitador.value = true;
+
+  buscandoFacilitador.value = true;
+  debounceId = setTimeout(async () => {
     try {
       const resp = await apiService.buscarFacilitadores(q);
-      if (resp.success) {
-        facilitadoresEncontrados.value = resp.facilitadores;
-      }
+      facilitadoresEncontrados.value = resp.success ? resp.facilitadores : [];
     } catch (err) {
       console.error('Error buscando facilitadores:', err);
       facilitadoresEncontrados.value = [];
@@ -745,302 +509,132 @@ function buscarFacilitadoresRT() {
   }, 300);
 }
 
-function seleccionarFacilitador(fac) {
-  facilitadorSeleccionado.value = fac;
-  facilitadorQuery.value = fac.nombre_completo;
-  mostrarResultadosFacilitador.value = false;
+function seleccionarFacilitador(f) {
+  facilitadorSeleccionado.value = f;
+  facilitadorQuery.value = '';
   facilitadoresEncontrados.value = [];
-  // Set supervisor name for display and backend
-  form.supervisor = fac.nombre_completo;
+  mostrarResultados.value = false;
+  form.supervisor = f.nombre_completo;
 }
 
 function limpiarFacilitador() {
   facilitadorSeleccionado.value = null;
   facilitadorQuery.value = '';
   facilitadoresEncontrados.value = [];
-  mostrarResultadosFacilitador.value = false;
+  mostrarResultados.value = false;
+  form.supervisor = '';
 }
 
+/* Al dejar de ser técnico se limpia el facilitador y el supervisor heredado */
+watch(() => form.cargo, (nuevo, viejo) => {
+  if (nuevo === viejo) return;
+  if (viejo === 'OTRO' && nuevo !== 'OTRO') form.cargoOtro = '';
+  if (!['TECNICO SOCIAL', 'TECNICO PRODUCTIVO'].includes(up(nuevo))) {
+    limpiarFacilitador();
+    form.supervisor = '';
+  }
+});
+
+/* ── Validación por paso ── */
+function validarPaso(n) {
+  if (n === 1) {
+    if (!form.nombre.trim()) return 'El nombre es obligatorio';
+    if (!form.primerApellido.trim()) return 'El apellido paterno es obligatorio';
+    if (!form.segundoApellido.trim()) return 'El apellido materno es obligatorio';
+    if (!form.curp.trim()) return 'La CURP es obligatoria';
+    if (form.curp.length !== 18) return 'La CURP debe tener 18 caracteres';
+    if (!curpValida.value) return 'La CURP solo admite letras mayúsculas y números';
+    return '';
+  }
+  if (n === 2) {
+    if (!form.cargo) return 'Selecciona tu puesto de trabajo';
+    if (form.cargo === 'OTRO' && !form.cargoOtro.trim()) return 'Especifica tu puesto de trabajo';
+    if (!form.territorio) return 'Selecciona tu territorio';
+    if (esTecnico.value && !facilitadorSeleccionado.value) return 'Debes seleccionar tu facilitador';
+    if (!esTecnico.value && !form.supervisor.trim()) return 'El supervisor inmediato es obligatorio';
+    return '';
+  }
+  if (n === 3) {
+    if (!form.email.trim()) return 'El correo electrónico es obligatorio';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return 'Ingresa un correo electrónico válido';
+    if (!form.telefono.trim()) return 'El número de teléfono es obligatorio';
+    if (!/^\d{10}$/.test(form.telefono)) return 'El teléfono debe tener 10 dígitos';
+    if (form.password.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
+    if (!passwordsMatch.value) return 'Las contraseñas no coinciden';
+    return '';
+  }
+  if (!termsAccepted.value) return 'Debes aceptar el Aviso de Privacidad';
+  return '';
+}
+
+function prev() {
+  message.text = '';
+  if (step.value > 1) step.value--;
+}
+
+function onSubmit() {
+  const error = validarPaso(step.value);
+  if (error) {
+    message.text = error;
+    message.type = 'error';
+    if (step.value === STEPS.length) termsError.value = error;
+    return;
+  }
+
+  message.text = '';
+  if (step.value < STEPS.length) {
+    step.value++;
+    return;
+  }
+  register();
+}
+
+/* ── Alta en el servidor ── */
 async function register() {
-  if (!validateForm()) return;
-  
+  if (loading.value) return;
+
   isOnline.value = await checkInternetConnection();
   if (!isOnline.value) {
     message.text = getOfflineMessage();
     message.type = 'error';
     return;
   }
-  
-  if (loading.value) return;
-  
+
   loading.value = true;
   message.text = '';
-  
+
   try {
-    const telefonoCompleto = `${form.codigoPais}${form.telefono.trim()}`;
-    const nombreCompleto = `${form.nombre.trim()} ${form.primerApellido.trim()} ${form.segundoApellido.trim()}`.toUpperCase();
-    const cargoFinal = form.cargo === 'OTRO' ? form.cargoOtro.trim().toUpperCase() : form.cargo.toUpperCase();
-    
     const payload = {
       correo: form.email.trim(),
-      nombre_completo: nombreCompleto,
-      cargo: cargoFinal,
-      supervisor: form.supervisor.trim().toUpperCase(),
+      nombre_completo: up(nombreCompleto.value),
+      cargo: up(cargoFinal.value.trim()),
+      supervisor: up(form.supervisor.trim()),
       contrasena: form.password,
       curp: form.curp.toUpperCase().trim(),
-      telefono: telefonoCompleto,
-      territorio: form.territorio
+      telefono: `${form.codigoPais}${form.telefono.trim()}`,
+      territorio: form.territorio,
     };
-    
-    // Si es técnico y eligió facilitador, enviarlo
-    if (facilitadorSeleccionado.value && facilitadorSeleccionado.value.admin_id) {
+    if (facilitadorSeleccionado.value?.admin_id) {
       payload.facilitador_admin_id = facilitadorSeleccionado.value.admin_id;
     }
-    
-    const response = await apiService.createUser(payload);
-    currentApiUrl.value = apiService.getCurrentApiUrl();
+
+    await apiService.createUser(payload);
+
     showSuccessModal.value = true;
-    
-    setTimeout(() => {
-      router.push('/login');
-    }, 3000);
-    
+    setTimeout(goToLogin, 3000);
   } catch (error) {
     console.error('Error de registro:', error);
-    
     if (error.response) {
-      const status = error.response.status;
-      if (status === 400) {
-        const detail = error.response.data.detail || '';
-        if (detail.includes('correo')) {
-          message.text = 'El correo electrónico ya está registrado.';
-        } else if (detail.includes('CURP')) {
-          message.text = 'La CURP ya está registrada.';
-        } else {
-          message.text = detail || 'Los datos proporcionados son inválidos.';
-        }
-      } else if (status === 500) {
-        message.text = 'Error del servidor. Inténtalo de nuevo.';
-      } else {
-        message.text = error.response.data.detail || 'Error al crear la cuenta.';
-      }
+      message.text = error.response.data?.detail || 'No se pudo crear la cuenta.';
     } else if (error.request) {
       message.text = 'No se pudo conectar con el servidor.';
     } else {
       message.text = 'Error al crear la cuenta: ' + error.message;
     }
-    
     message.type = 'error';
+    step.value = STEPS.length;
   } finally {
     loading.value = false;
-  }
-}
-
-function validateForm() {
-  curpError.value = '';
-  curpWarning.value = '';
-  termsError.value = '';
-  territorioError.value = '';
-  message.text = '';
-  
-  if (!termsAccepted.value) {
-    termsError.value = 'Debes aceptar el Aviso de Privacidad';
-    message.text = 'Debes aceptar el Aviso de Privacidad';
-    message.type = 'error';
-    return false;
-  }
-
-  if (!form.email || !form.email.trim()) {
-    message.text = 'El correo electrónico es obligatorio';
-    message.type = 'error';
-    return false;
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(form.email.trim())) {
-    message.text = 'Ingresa un correo electrónico válido';
-    message.type = 'error';
-    return false;
-  }
-
-  if (!form.nombre || !form.nombre.trim()) {
-    message.text = 'El nombre es obligatorio';
-    message.type = 'error';
-    return false;
-  }
-
-  if (!form.primerApellido || !form.primerApellido.trim()) {
-    message.text = 'El apellido paterno es obligatorio';
-    message.type = 'error';
-    return false;
-  }
-
-  if (!form.segundoApellido || !form.segundoApellido.trim()) {
-    message.text = 'El apellido materno es obligatorio';
-    message.type = 'error';
-    return false;
-  }
-
-  if (!form.cargo || !form.cargo.trim()) {
-    message.text = 'El puesto de trabajo es obligatorio';
-    message.type = 'error';
-    return false;
-  }
-
-  if (form.cargo === 'OTRO' && (!form.cargoOtro || !form.cargoOtro.trim())) {
-    message.text = 'Especifica el puesto de trabajo';
-    message.type = 'error';
-    return false;
-  }
-
-  if (esTecnico.value) {
-    if (!facilitadorSeleccionado.value) {
-      message.text = 'Debes seleccionar un facilitador';
-      message.type = 'error';
-      return false;
-    }
-  } else {
-    if (!form.supervisor || !form.supervisor.trim()) {
-      message.text = 'El supervisor inmediato es obligatorio';
-      message.type = 'error';
-      return false;
-    }
-  }
-  
-  if (!form.curp || !form.curp.trim()) {
-    curpError.value = 'La CURP es obligatoria';
-    message.text = 'La CURP es obligatoria';
-    message.type = 'error';
-    return false;
-  }
-  
-  if (!form.territorio || !form.territorio.trim()) {
-    territorioError.value = 'El territorio es obligatorio';
-    message.text = 'Selecciona el territorio';
-    message.type = 'error';
-    return false;
-  }
-  
-  if (!form.telefono || !form.telefono.trim()) {
-    message.text = 'El número de teléfono es obligatorio';
-    message.type = 'error';
-    return false;
-  }
-  
-  if (!/^\d{10}$/.test(form.telefono.trim())) {
-    message.text = 'El teléfono debe tener 10 dígitos';
-    message.type = 'error';
-    return false;
-  }
-  
-  const curpClean = form.curp.toUpperCase().trim();
-  if (curpClean.length !== 18) {
-    curpError.value = 'La CURP debe tener 18 caracteres';
-    message.text = 'La CURP debe tener 18 caracteres';
-    message.type = 'error';
-    return false;
-  }
-  
-  const curpRegex = /^[A-Z0-9]{18}$/;
-  if (!curpRegex.test(curpClean)) {
-    curpError.value = 'Solo letras mayúsculas y números';
-    message.text = 'CURP: solo letras mayúsculas y números';
-    message.type = 'error';
-    return false;
-  }
-  
-  if (form.password !== form.confirmPassword) {
-    message.text = 'Las contraseñas no coinciden';
-    message.type = 'error';
-    return false;
-  }
-  
-  if (form.password.length < 6) {
-    message.text = 'Contraseña: mínimo 6 caracteres';
-    message.type = 'error';
-    return false;
-  }
-  
-  return true;
-}
-
-function formatCurp() {
-  form.curp = form.curp.toUpperCase();
-  curpError.value = '';
-  curpWarning.value = '';
-  termsError.value = '';
-  
-  if (form.curp.length > 0 && form.curp.length < 18) {
-    curpError.value = `Faltan ${18 - form.curp.length} caracteres`;
-  } else if (form.curp.length === 18) {
-    const curpRegex = /^[A-Z0-9]{18}$/;
-    if (!curpRegex.test(form.curp)) {
-      curpError.value = 'Solo letras mayúsculas y números';
-    } else {
-      curpWarning.value = 'CURP válida';
-    }
-  }
-}
-
-function formatNombre() {
-  form.nombre = form.nombre.toUpperCase();
-}
-
-function formatPrimerApellido() {
-  form.primerApellido = form.primerApellido.toUpperCase();
-}
-
-function formatSegundoApellido() {
-  form.segundoApellido = form.segundoApellido.toUpperCase();
-}
-
-function formatSupervisor() {
-  if (!esTecnico.value) {
-    form.supervisor = form.supervisor.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  }
-}
-
-function formatCargoOtro() {
-  form.cargoOtro = form.cargoOtro.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
-
-function validatePhone() {
-  form.telefono = form.telefono.replace(/\D/g, '');
-  if (form.telefono.length > 10) {
-    form.telefono = form.telefono.slice(0, 10);
-  }
-}
-
-function selectCountry(pais) {
-  form.codigoPais = pais.codigo;
-  showCountrySelector.value = false;
-}
-
-function closeCountrySelector(e) {
-  if (!e.target.closest('.country-code-selector')) {
-    showCountrySelector.value = false;
-  }
-}
-
-function handleEscKey(event) {
-  if (event.key === 'Escape' && showCountrySelector.value) {
-    showCountrySelector.value = false;
-  }
-}
-
-function clearTermsError() {
-  termsError.value = '';
-  if (message.text && message.text.includes('Aviso de Privacidad')) {
-    message.text = '';
-  }
-}
-
-function handleEnterKey(event) {
-  if (!termsAccepted.value) {
-    event.preventDefault();
-    termsError.value = 'Debes aceptar el Aviso de Privacidad';
-    message.text = 'Debes aceptar el Aviso de Privacidad';
-    message.type = 'error';
   }
 }
 
@@ -1048,1329 +642,379 @@ function goToLogin() {
   showSuccessModal.value = false;
   router.push('/login');
 }
+
+/* ── Ciclo de vida ── */
+function onDocClick(e) {
+  if (!e.target.closest('.phone-cc')) showPaises.value = false;
+  if (!e.target.closest('.fac')) mostrarResultados.value = false;
+}
+function onEsc(e) {
+  if (e.key !== 'Escape') return;
+  showPaises.value = false;
+  mostrarResultados.value = false;
+}
+
+onMounted(async () => {
+  isOnline.value = await checkInternetConnection();
+  if (!isOnline.value) {
+    message.text = getOfflineMessage();
+    message.type = 'error';
+  } else {
+    try {
+      await apiService.refreshApiUrl();
+    } catch (error) {
+      console.warn('Error inicializando servicio API:', error);
+    }
+  }
+  document.addEventListener('click', onDocClick);
+  document.addEventListener('keydown', onEsc);
+});
+
+onUnmounted(() => {
+  clearTimeout(debounceId);
+  document.removeEventListener('click', onDocClick);
+  document.removeEventListener('keydown', onEsc);
+});
 </script>
 
 <style scoped>
-/* ==========================================================================
-   APPLE DESIGN SYSTEM - REGISTER PAGE
-   Clean, Minimal, Professional
-   ========================================================================== */
+.mono { font-variant-numeric: tabular-nums; letter-spacing: 1px; }
 
-/* Base Reset */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* Main Container */
-.apple-register {
-  position: fixed;
-  inset: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.register-mesh-bg {
-  background: linear-gradient(150deg, #052e18 0%, #0b3d22 30%, #0f4c26 55%, #14622f 100%);
-  overflow: hidden;
-}
-.mesh-blob-r {
-  position: absolute;
+/* ── Encabezado ── */
+.head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.back {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; flex-shrink: 0;
   border-radius: 50%;
-  filter: blur(70px);
-  opacity: 0.55;
-  pointer-events: none;
-}
-.blob-r1 { width: 46vw; height: 46vw; max-width: 560px; max-height: 560px; top: -12%; left: -8%; background: radial-gradient(circle, rgba(74,222,128,0.5), transparent 70%); animation: rblob1 24s ease-in-out infinite; }
-.blob-r2 { width: 38vw; height: 38vw; max-width: 460px; max-height: 460px; bottom: -12%; right: -8%; background: radial-gradient(circle, rgba(21,128,61,0.55), transparent 70%); animation: rblob2 28s ease-in-out infinite; }
-.blob-r3 { width: 28vw; height: 28vw; max-width: 360px; max-height: 360px; top: 40%; right: 10%; background: radial-gradient(circle, rgba(245,196,81,0.28), transparent 70%); animation: rblob1 20s ease-in-out infinite reverse; }
-@keyframes rblob1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(5%, 6%) scale(1.1); } }
-@keyframes rblob2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-5%, -6%) scale(1.08); } }
-
-/* Scrollable Content */
-.register-content {
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  padding: 0 20px env(safe-area-inset-bottom, 20px);
-  padding-top: 0;
-}
-
-/* Fixed Navigation */
-.register-nav {
-  position: sticky;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: rgba(245, 245, 247, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  padding: 0 20px;
-  margin: 0 -20px;
-}
-
-.nav-container {
-  max-width: 500px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 56px;
-  gap: 16px;
-}
-
-.nav-back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 980px;
-  color: #16a34a;
-  font-size: 15px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  flex-shrink: 0;
-}
-
-.nav-back-btn:hover {
-  background: rgba(255, 255, 255, 1);
-  transform: translateX(-2px);
-}
-
-.nav-back-btn:active {
-  transform: scale(0.97);
-}
-
-.nav-back-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.nav-title {
-  font-size: 17px;
-  font-weight: 600;
-  color: #1d1d1f;
-  letter-spacing: -0.3px;
-  margin: 0;
-  text-align: center;
-  flex: 1;
-}
-
-.nav-spacer {
-  width: 90px;
-  flex-shrink: 0;
-}
-
-/* Hero Section */
-.register-hero {
-  text-align: center;
-  padding: 20px 0 16px;
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.register-brand {
-  justify-content: center;
-  margin-bottom: 14px;
-}
-
-.hero-instruction {
-  font-size: 13px;
-  line-height: 1.5;
-  color: rgba(255,255,255,0.72);
-  font-weight: 400;
-  margin: 0;
-  text-align: center;
-}
-
-/* Error Alert */
-.error-alert {
-  max-width: 500px;
-  margin: 0 auto 16px;
-  padding: 14px;
-  background: #fff2f2;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 59, 48, 0.2);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.alert-icon {
-  flex-shrink: 0;
-}
-
-.alert-icon svg {
-  width: 20px;
-  height: 20px;
-  color: #ff3b30;
-}
-
-.alert-text {
-  font-size: 13px;
-  color: #ff3b30;
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-/* Form Container */
-.register-form {
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-/* Form Groups */
-.form-group {
-  background: white;
-  border-radius: 14px;
-  padding: 15px;
-  margin-bottom: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.group-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #f5f5f7;
-}
-
-.group-icon {
-  width: 28px;
-  height: 28px;
-  background: linear-gradient(180deg, #34c759 0%, #30b350 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.group-icon svg {
-  width: 14px;
-  height: 14px;
-  color: white;
-}
-
-.group-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1d1d1f;
-  letter-spacing: -0.2px;
-}
-
-/* Form Fields */
-.form-field {
-  margin-bottom: 16px;
-}
-
-.form-field:last-child {
-  margin-bottom: 0;
-}
-
-.field-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: #1d1d1f;
-  margin-bottom: 7px;
-  letter-spacing: -0.1px;
-}
-
-/* Input Wrapper */
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  background: #f5f5f7;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-.input-wrapper:focus-within {
-  background: white;
-  border-color: #34c759;
-  box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.1);
-}
-
-.input-wrapper.has-error {
-  border-color: #ff3b30;
-}
-
-.input-wrapper.has-error:focus-within {
-  box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.1);
-}
-
-.input-wrapper.has-success {
-  border-color: #34c759;
-}
-
-.input-wrapper.is-disabled {
-  background: #e8e8ed;
-  cursor: not-allowed;
-}
-
-.input-icon {
-  position: absolute;
-  left: 12px;
-  width: 18px;
-  height: 18px;
-  color: #86868b;
-  pointer-events: none;
-  transition: color 0.2s ease;
-}
-
-.input-wrapper:focus-within .input-icon {
-  color: #34c759;
-}
-
-.input-wrapper.has-error .input-icon {
-  color: #ff3b30;
-}
-
-.input-wrapper input {
-  flex: 1;
-  width: 100%;
-  padding: 12px 12px 12px 42px;
-  border: none;
-  background: transparent;
-  font-size: 15px;
-  color: #1d1d1f;
-  outline: none;
-  font-family: inherit;
-}
-
-.input-wrapper input::placeholder {
-  color: #86868b;
-}
-
-.input-wrapper input.uppercase-input {
-  text-transform: uppercase;
-}
-
-.input-wrapper input.letter-spaced {
-  letter-spacing: 2px;
-}
-
-.input-wrapper input:read-only {
-  cursor: default;
-  color: #86868b;
-}
-
-.char-counter {
-  position: absolute;
-  right: 12px;
-  font-size: 11px;
-  color: #86868b;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Field Hints */
-.field-hint {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  color: #86868b;
-  margin-top: 5px;
-}
-
-.field-hint svg {
-  width: 14px;
-  height: 14px;
-}
-
-.field-hint.error-hint {
-  color: #ff3b30;
-}
-
-.field-hint.success-hint {
-  color: #34c759;
-}
-
-/* Select Wrapper */
-.select-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  background: #f5f5f7;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-.select-wrapper:focus-within {
-  background: white;
-  border-color: #34c759;
-  box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.1);
-}
-
-.select-wrapper select {
-  flex: 1;
-  width: 100%;
-  padding: 12px 40px 12px 42px;
-  border: none;
-  background: transparent;
-  font-size: 15px;
-  color: #1d1d1f;
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.select-wrapper select option {
-  color: #1d1d1f;
-}
-
-.select-arrow {
-  position: absolute;
-  right: 12px;
-  width: 18px;
-  height: 18px;
-  color: #86868b;
-  pointer-events: none;
-}
-
-/* Phone Field */
-.phone-field {
-  display: flex;
-  gap: 10px;
-}
-
-.country-code-selector {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.country-trigger {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 12px 10px;
-  background: #f5f5f7;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #1d1d1f;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-}
-
-.country-trigger:hover {
-  background: #e8e8ed;
-}
-
-.country-code-text {
-  font-weight: 600;
-  color: #34c759;
-}
-
-.country-dial {
-  color: #86868b;
-}
-
-.country-arrow {
-  width: 14px;
-  height: 14px;
-  color: #86868b;
-}
-
-.phone-input-wrapper {
-  flex: 1;
-}
-
-.phone-input-wrapper input {
-  padding-left: 12px;
-}
-
-/* Country Panel */
-.country-panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  width: 280px;
-  background: white;
-  border-radius: 14px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  z-index: 100;
-  overflow: hidden;
-}
-
-.country-search-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border-bottom: 1px solid #f5f5f7;
-}
-
-.country-search-box svg {
-  width: 16px;
-  height: 16px;
-  color: #86868b;
-}
-
-.country-search-box input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 14px;
-  font-family: inherit;
-  color: #1d1d1f;
-}
-
-.country-search-box input::placeholder {
-  color: #86868b;
-}
-
-.country-options {
+  background: rgba(22, 163, 74, 0.09);
+  color: var(--au-green-600);
+  transition: background 0.15s, transform 0.15s;
+}
+.back:hover { background: rgba(22, 163, 74, 0.16); transform: translateX(-2px); }
+.back :deep(svg) { width: 16px; height: 16px; }
+.head-text h1 {
+  margin: 0; font-size: clamp(18px, 2.5vh, 22px); font-weight: 800;
+  letter-spacing: -0.5px; color: var(--au-ink);
+}
+.head-text p { margin: 2px 0 0; font-size: 12px; color: var(--au-ink-soft); }
+
+/* ── Barra de pasos ── */
+.steps {
   list-style: none;
-  max-height: 240px;
-  overflow-y: auto;
-  padding: 8px;
-}
-
-.country-option {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.country-option:hover {
-  background: #f5f5f7;
-}
-
-.country-abbr {
-  font-size: 12px;
-  font-weight: 700;
-  color: #34c759;
-  min-width: 26px;
-}
-
-.country-name {
-  flex: 1;
-  font-size: 14px;
-  color: #1d1d1f;
-}
-
-.country-dial-code {
-  font-size: 13px;
-  color: #86868b;
-  font-variant-numeric: tabular-nums;
-}
-
-.country-empty {
-  padding: 18px;
-  text-align: center;
-  color: #86868b;
-  font-size: 13px;
-}
-
-/* Visibility Toggle */
-.visibility-toggle {
-  position: absolute;
-  right: 6px;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  border-radius: 10px;
-  transition: background 0.15s ease;
-}
-
-.visibility-toggle:hover {
-  background: rgba(0, 0, 0, 0.04);
-}
-
-.visibility-toggle svg {
-  width: 20px;
-  height: 20px;
-  color: #86868b;
-}
-
-/* Input Spinner */
-.input-spinner {
-  position: absolute;
-  right: 12px;
-  width: 18px;
-  height: 18px;
-  border: 2px solid #e8e8ed;
-  border-top-color: #34c759;
-  border-radius: 50%;
-  animation: spinner-rotate 0.8s linear infinite;
-}
-
-@keyframes spinner-rotate {
-  to { transform: rotate(360deg); }
-}
-
-/* Privacy Agreement */
-.privacy-agreement {
-  background: transparent;
+  margin: 0 0 18px;
   padding: 0;
-  box-shadow: none;
 }
-
-.privacy-container {
-  background: white;
-  border-radius: 18px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.privacy-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.privacy-header svg {
-  width: 22px;
-  height: 22px;
-  color: #34c759;
-}
-
-.privacy-header h4 {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1d1d1f;
-}
-
-.privacy-scroll-area {
-  background: #f5f5f7;
-  border-radius: 12px;
-  padding: 14px;
-  max-height: 160px;
-  overflow-y: auto;
-  font-size: 12px;
-  line-height: 1.6;
-  color: #6e6e73;
-  margin-bottom: 16px;
-}
-
-.privacy-scroll-area p {
-  margin-bottom: 12px;
-}
-
-.privacy-scroll-area p:last-child {
-  margin-bottom: 0;
-}
-
-.privacy-title-text {
-  font-weight: 700;
-  color: #1d1d1f;
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.5px;
-}
-
-.privacy-section-title {
-  font-weight: 600;
-  color: #1d1d1f;
-  margin-top: 16px;
-}
-
-.privacy-date {
-  font-style: italic;
-  color: #86868b;
-}
-
-.privacy-accept-text {
-  font-weight: 500;
-  color: #34c759;
-}
-
-/* Checkbox */
-.checkbox-field {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  cursor: pointer;
-}
-
-.checkbox-field input {
-  display: none;
-}
-
-.checkbox-indicator {
-  width: 22px;
-  height: 22px;
-  background: #f5f5f7;
-  border: 2px solid #d2d2d7;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-}
-
-.checkbox-indicator svg {
-  width: 13px;
-  height: 13px;
-  opacity: 0;
-  transform: scale(0.5);
-  transition: all 0.2s ease;
-}
-
-.checkbox-field input:checked + .checkbox-indicator {
-  background: #34c759;
-  border-color: #34c759;
-}
-
-.checkbox-field input:checked + .checkbox-indicator svg {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.checkbox-text {
-  font-size: 12px;
-  color: #6e6e73;
-  line-height: 1.5;
-}
-
-.required-mark {
-  color: #ff3b30;
-  font-weight: 600;
-}
-
-.terms-error-hint {
-  margin-top: 12px;
-}
-
-/* Submit Button */
-.submit-btn {
-  width: 100%;
-  padding: 15px 20px;
-  background: linear-gradient(180deg, #34c759 0%, #30b350 100%);
-  border: none;
-  border-radius: 14px;
-  color: white;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
-  box-shadow: 0 4px 14px rgba(52, 199, 89, 0.35);
-  font-family: inherit;
-  margin-top: 8px;
-}
-
-.submit-btn:hover:not(.is-loading):not(.is-disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(52, 199, 89, 0.4);
-}
-
-.submit-btn:active:not(.is-loading):not(.is-disabled) {
-  transform: translateY(0);
-}
-
-.submit-btn.is-disabled {
-  background: linear-gradient(180deg, #8e8e93 0%, #7c7c80 100%);
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.submit-btn.is-loading {
-  cursor: wait;
-}
-
-.btn-inner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.btn-inner svg {
-  width: 18px;
-  height: 18px;
-}
-
-.btn-loader {
-  width: 18px;
-  height: 18px;
-  border: 2.5px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spinner-rotate 0.8s linear infinite;
-}
-
-/* Footer */
-.register-footer {
-  max-width: 500px;
-  margin: 24px auto;
-  text-align: center;
-  padding-bottom: 24px;
-}
-
-.register-footer p {
-  font-size: 13px;
-  color: rgba(255,255,255,0.65);
-}
-
-.register-footer a {
-  color: #4ade80;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.register-footer a:hover {
-  text-decoration: underline;
-}
-
-/* ==========================================================================
-   MODAL
-   ========================================================================== */
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  z-index: 1000;
-}
-
-.modal-container {
-  background: white;
-  border-radius: 24px;
-  padding: 32px 28px;
-  max-width: 360px;
-  width: 100%;
-  text-align: center;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
-}
-
-.modal-success-icon {
-  width: 70px;
-  height: 70px;
-  margin: 0 auto 20px;
-}
-
-.modal-success-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.modal-heading {
-  font-size: 21px;
-  font-weight: 700;
-  color: #1d1d1f;
-  margin-bottom: 8px;
-  letter-spacing: -0.3px;
-}
-
-.modal-description {
-  font-size: 14px;
-  color: #86868b;
-  margin-bottom: 20px;
-}
-
-.modal-progress-track {
-  height: 4px;
-  background: #f5f5f7;
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.modal-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #34c759, #30d158);
-  border-radius: 2px;
-  animation: progress-fill 3s linear forwards;
-}
-
-@keyframes progress-fill {
-  from { width: 0%; }
-  to { width: 100%; }
-}
-
-.modal-redirect-text {
-  font-size: 12px;
-  color: #34c759;
-  font-weight: 500;
-  margin-bottom: 20px;
-}
-
-.modal-action-btn {
-  padding: 13px 28px;
-  background: linear-gradient(180deg, #34c759 0%, #30b350 100%);
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-}
-
-.modal-action-btn:hover {
-  transform: scale(1.03);
-}
-
-.modal-action-btn:active {
-  transform: scale(0.98);
-}
-
-/* ==========================================================================
-   TRANSITIONS
-   ========================================================================== */
-
-/* Modal Scale */
-.modal-scale-enter-active,
-.modal-scale-leave-active {
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-.modal-scale-enter-from,
-.modal-scale-leave-to {
-  opacity: 0;
-}
-
-.modal-scale-enter-from .modal-container,
-.modal-scale-leave-to .modal-container {
-  transform: scale(0.92) translateY(20px);
-  opacity: 0;
-}
-
-/* Alert Slide */
-.alert-slide-enter-active,
-.alert-slide-leave-active {
-  transition: all 0.3s ease;
-}
-
-.alert-slide-enter-from {
-  opacity: 0;
-  transform: translateY(-12px);
-}
-
-.alert-slide-leave-to {
-  opacity: 0;
-  transform: translateY(8px);
-}
-
-/* Field Expand */
-.field-expand-enter-active,
-.field-expand-leave-active {
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.field-expand-enter-from,
-.field-expand-leave-to {
-  opacity: 0;
-  max-height: 0;
-  margin-bottom: 0;
-}
-
-/* Dropdown Fade */
-.dropdown-fade-enter-active,
-.dropdown-fade-leave-active {
-  transition: all 0.2s ease;
-  transform-origin: top left;
-}
-
-.dropdown-fade-enter-from,
-.dropdown-fade-leave-to {
-  opacity: 0;
-  transform: scale(0.95) translateY(-6px);
-}
-
-/* Hint Fade */
-.hint-fade-enter-active,
-.hint-fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.hint-fade-enter-from,
-.hint-fade-leave-to {
-  opacity: 0;
-}
-
-/* Button Fade */
-.btn-fade-enter-active,
-.btn-fade-leave-active {
-  transition: all 0.2s ease;
-}
-
-.btn-fade-enter-from,
-.btn-fade-leave-to {
-  opacity: 0;
-  transform: translateY(4px);
-}
-
-/* ==========================================================================
-   RESPONSIVE
-   ========================================================================== */
-
-@media (max-width: 480px) {
-  .register-content {
-    padding: 0 16px env(safe-area-inset-bottom, 16px);
-    padding-top: 0;
-  }
-  
-  .register-nav {
-    padding: 0 16px;
-    margin: 0 -16px;
-  }
-  
-  .nav-container {
-    height: 52px;
-  }
-  
-  .nav-title {
-    font-size: 16px;
-  }
-  
-  .nav-back-btn {
-    padding: 7px 12px;
-    font-size: 13px;
-  }
-  
-  .nav-back-btn svg {
-    width: 14px;
-    height: 14px;
-  }
-  
-  .nav-spacer {
-    width: 80px;
-  }
-  
-  .hero-instruction {
-    font-size: 12px;
-  }
-  
-  .form-group {
-    padding: 14px;
-    border-radius: 14px;
-  }
-  
-  .group-title {
-    font-size: 12px;
-  }
-  
-  .input-wrapper input,
-  .select-wrapper select {
-    font-size: 16px; /* Prevents iOS zoom */
-    padding: 12px 12px 12px 40px;
-  }
-  
-  .country-panel {
-    width: 260px;
-    left: -8px;
-  }
-}
-
-@media (min-width: 768px) {
-  .register-content {
-    padding: 0 24px 40px;
-    padding-top: 0;
-  }
-  
-  .register-nav {
-    padding: 0 24px;
-    margin: 0 -24px;
-  }
-  
-  .nav-container {
-    height: 60px;
-  }
-  
-  .nav-title {
-    font-size: 19px;
-  }
-  
-  .form-group {
-    padding: 18px;
-  }
-}
-
-/* ==========================================================================
-   SCROLLBAR
-   ========================================================================== */
-
-.register-content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.register-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.register-content::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
-}
-
-.register-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
-}
-
-.privacy-scroll-area::-webkit-scrollbar {
-  width: 4px;
-}
-
-.privacy-scroll-area::-webkit-scrollbar-track {
-  background: #e8e8ed;
-  border-radius: 2px;
-}
-
-.privacy-scroll-area::-webkit-scrollbar-thumb {
-  background: #c7c7cc;
-  border-radius: 2px;
-}
-
-.country-options::-webkit-scrollbar {
-  width: 6px;
-}
-
-.country-options::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.country-options::-webkit-scrollbar-thumb {
-  background: #d2d2d7;
-  border-radius: 3px;
-}
-
-/* ==========================================================================
-   REDUCED MOTION
-   ========================================================================== */
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* ==========================================================================
-   BACKDROP FILTER FALLBACK
-   ========================================================================== */
-
-@supports not (backdrop-filter: blur(20px)) {
-  .register-nav {
-    background: rgba(245, 245, 247, 0.98);
-  }
-  
-  .modal-backdrop {
-    background: rgba(0, 0, 0, 0.8);
-  }
-}
-
-/* ==========================================================================
-   FACILITADOR SEARCH STYLES
-   ========================================================================== */
-
-.facilitador-search-field {
-  position: relative;
-}
-
-.field-label-badge {
-  display: inline-block;
-  padding: 1px 8px;
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
-  border-radius: 9999px;
-  font-size: 10px;
-  font-weight: 600;
-  margin-left: 6px;
-  vertical-align: middle;
-}
-
-.facilitador-clear-btn {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  z-index: 2;
-}
-.facilitador-clear-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-}
-.facilitador-clear-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-.facilitador-selected-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  margin-top: 8px;
-  background: rgba(16, 185, 129, 0.06);
-  border: 1.5px solid rgba(16, 185, 129, 0.3);
-  border-radius: 12px;
-}
-
-.facilitador-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #059669, #10b981);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 15px;
-  flex-shrink: 0;
-}
-
-.facilitador-selected-info {
+.steps li {
   flex: 1;
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+  font-size: 10.5px;
 }
-
-.facilitador-selected-name {
-  display: block;
-  font-weight: 600;
-  font-size: 13px;
-  color: #1f2937;
-}
-
-.facilitador-selected-meta {
-  display: block;
-  font-size: 11px;
-  color: #6b7280;
-  margin-top: 1px;
-}
-
-.facilitador-check {
-  width: 22px;
-  height: 22px;
-  color: #10b981;
-  flex-shrink: 0;
-}
-
-.facilitador-results {
+/* Línea conectora entre pasos */
+.steps li::before {
+  content: '';
   position: absolute;
-  left: 0;
-  right: 0;
+  top: 12px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: #e2ece6;
+}
+.steps li:first-child::before { display: none; }
+.steps li.done::before, .steps li.now::before { background: var(--au-green-400); }
+
+.steps .dot {
+  position: relative;
+  z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  width: 25px; height: 25px;
+  border-radius: 50%;
+  background: #eef4f0;
+  color: var(--au-ink-faint);
+  font-size: 11px; font-weight: 700;
+  border: 2px solid #e2ece6;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.steps .dot :deep(svg) { width: 12px; height: 12px; }
+.steps li.done .dot {
+  background: var(--au-green-400); border-color: var(--au-green-400); color: #fff;
+}
+.steps li.now .dot {
+  background: var(--au-green-600); border-color: var(--au-green-600); color: #fff;
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.14);
+}
+.steps em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--au-ink-faint);
+}
+.steps li.now em { color: var(--au-green-600); }
+.steps li.done em { color: var(--au-ink-soft); }
+
+/* ── Facilitador ── */
+.fac { position: relative; }
+.fac-picked {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 11px;
+  border: 1.5px solid var(--au-green-400);
+  background: #f0fdf4;
+  border-radius: var(--au-r-md);
+}
+.fac-avatar {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--au-green-400), var(--au-green-600));
+  color: #fff; font-weight: 700; font-size: 14px;
+}
+.fac-avatar.sm { width: 28px; height: 28px; font-size: 12px; }
+.fac-info { display: flex; flex-direction: column; min-width: 0; flex: 1; text-align: left; }
+.fac-info b {
+  font-size: 13px; font-weight: 600; color: var(--au-ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fac-info em {
+  font-style: normal; font-size: 10.5px; color: var(--au-ink-faint);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fac-clear {
+  display: flex; flex-shrink: 0;
+  width: 26px; height: 26px;
+  align-items: center; justify-content: center;
+  border: none; background: none; cursor: pointer;
+  color: var(--au-ink-faint); border-radius: 50%;
+}
+.fac-clear:hover { background: rgba(0, 0, 0, 0.06); color: var(--au-danger); }
+.fac-clear :deep(svg) { width: 14px; height: 14px; }
+
+.fac-results {
+  position: absolute;
+  z-index: 20;
   top: 100%;
-  margin-top: 4px;
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 14px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-  z-index: 50;
-  max-height: 240px;
+  left: 0; right: 0;
+  margin-top: 5px;
+  max-height: 230px;
   overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--au-surface-border);
+  border-radius: var(--au-r-md);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
+}
+.fac-results ul { list-style: none; margin: 0; padding: 4px; }
+.fac-results li + li { border-top: 1px solid #f1f6f3; }
+.fac-results button {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 8px 9px;
+  background: none; border: none; cursor: pointer;
+  border-radius: var(--au-r-sm);
+  font-family: inherit;
+}
+.fac-results button:hover { background: #f0fdf4; }
+.fac-state {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0; padding: 14px;
+  font-size: 12px; color: var(--au-ink-faint);
 }
 
-.facilitador-results-loading,
-.facilitador-results-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 18px;
-  color: #9ca3af;
-  font-size: 13px;
+/* ── Teléfono ── */
+.phone { display: flex; gap: 8px; align-items: stretch; }
+.phone-cc { position: relative; flex-shrink: 0; }
+.phone-cc-btn {
+  display: flex; align-items: center; gap: 6px; height: 100%;
+  padding: 0 11px;
+  background: var(--au-surface);
+  border: 1.5px solid var(--au-surface-border);
+  border-radius: var(--au-r-md);
+  cursor: pointer; font-family: inherit;
+  color: var(--au-ink);
+  transition: border-color 0.18s, background 0.18s;
 }
-.facilitador-results-empty svg {
-  width: 20px;
-  height: 20px;
-}
+.phone-cc.open .phone-cc-btn { background: #fff; border-color: var(--au-green-500); }
+.phone-cc-btn b { font-size: 12.5px; font-weight: 700; }
+.phone-cc-btn span { font-size: 12.5px; color: var(--au-ink-soft); }
+.phone-cc-btn svg { width: 13px; height: 13px; color: var(--au-ink-faint); }
+.phone-num { flex: 1; min-width: 0; }
 
-.facilitador-results-list {
-  list-style: none;
-  padding: 6px;
-  margin: 0;
+.phone-cc-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 250px;
+  padding: 7px;
+  background: #fff;
+  border: 1px solid var(--au-surface-border);
+  border-radius: var(--au-r-md);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
 }
+.phone-cc-menu ul { list-style: none; margin: 6px 0 0; padding: 0; max-height: 200px; overflow-y: auto; }
+.phone-cc-menu button {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 8px 9px;
+  background: none; border: none; cursor: pointer;
+  border-radius: var(--au-r-sm); font-family: inherit; text-align: left;
+}
+.phone-cc-menu button:hover { background: #f0fdf4; }
+.phone-cc-menu b { font-size: 11px; font-weight: 700; color: var(--au-green-600); width: 24px; }
+.phone-cc-menu span { flex: 1; font-size: 12.5px; color: var(--au-ink); }
+.phone-cc-menu em { font-style: normal; font-size: 11.5px; color: var(--au-ink-faint); }
+.phone-cc-menu .empty { padding: 12px; font-size: 12px; color: var(--au-ink-faint); text-align: center; }
 
-.facilitador-result-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  cursor: pointer;
+/* ── Medidor de contraseña ── */
+.meter { display: flex; align-items: center; gap: 9px; }
+.meter-bar {
+  flex: 1; height: 4px; border-radius: 99px;
+  background: #e6eee9; overflow: hidden;
+}
+.meter-bar i {
+  display: block; height: 100%; border-radius: 99px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+.meter-bar.lv-0 i, .meter-bar.lv-1 i { background: #f43f5e; }
+.meter-bar.lv-2 i { background: var(--au-gold); }
+.meter-bar.lv-3 i { background: var(--au-green-400); }
+.meter-bar.lv-4 i { background: var(--au-green-600); }
+.meter em {
+  font-style: normal; font-size: 10.5px; font-weight: 600;
+  white-space: nowrap;
+}
+.meter em.lv-0, .meter em.lv-1 { color: #e11d48; }
+.meter em.lv-2 { color: var(--au-gold-deep); }
+.meter em.lv-3, .meter em.lv-4 { color: var(--au-green-600); }
+
+/* ── Revisión ── */
+.review {
+  background: #f6faf7;
+  border: 1px solid var(--au-surface-border);
+  border-radius: var(--au-r-md);
+  padding: 14px;
+}
+.review h2 {
+  margin: 0 0 10px; font-size: 13px; font-weight: 700; color: var(--au-ink);
+}
+.review dl { margin: 0; display: flex; flex-direction: column; gap: 7px; }
+.review dl > div {
+  display: flex; justify-content: space-between; gap: 14px;
+  font-size: 12px; align-items: baseline;
+}
+.review dt { color: var(--au-ink-faint); flex-shrink: 0; }
+.review dd {
+  margin: 0; font-weight: 600; color: var(--au-ink);
+  text-align: right; word-break: break-word;
+}
+.review-edit {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 12px; padding: 6px 12px;
+  background: none; border: 1px solid var(--au-green-400);
+  border-radius: 99px; cursor: pointer;
+  color: var(--au-green-600); font-size: 11.5px; font-weight: 600; font-family: inherit;
   transition: background 0.15s;
 }
-.facilitador-result-item:hover {
-  background: rgba(16, 185, 129, 0.08);
-}
+.review-edit:hover { background: rgba(22, 163, 74, 0.08); }
+.review-edit :deep(svg) { width: 12px; height: 12px; }
 
-.facilitador-result-info {
-  flex: 1;
-  min-width: 0;
+/* ── Aviso de privacidad ── */
+.privacy {
+  border: 1px solid var(--au-surface-border);
+  border-radius: var(--au-r-md);
+  overflow: hidden;
 }
-
-.facilitador-result-name {
-  display: block;
-  font-weight: 600;
-  font-size: 13px;
-  color: #1f2937;
+.privacy-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 13px;
+  background: #f0fdf4;
+  border-bottom: 1px solid var(--au-surface-border);
+  color: var(--au-green-600);
 }
-
-.facilitador-result-meta {
-  display: block;
+.privacy-head :deep(svg) { width: 15px; height: 15px; }
+.privacy-head h3 { margin: 0; font-size: 12.5px; font-weight: 700; color: var(--au-ink); }
+.privacy-body {
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 12px 13px;
   font-size: 11px;
-  color: #6b7280;
-  margin-top: 1px;
+  line-height: 1.55;
+  color: var(--au-ink-soft);
 }
+.privacy-body p { margin: 0 0 8px; }
+.privacy-body p:last-child { margin-bottom: 0; }
+.privacy-h { font-weight: 700; color: var(--au-ink); }
 
-.input-spinner {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(16, 185, 129, 0.2);
-  border-top-color: #10b981;
+/* ── Checkbox ── */
+.check {
+  display: flex; align-items: flex-start; gap: 10px;
+  cursor: pointer; user-select: none;
+}
+.check input { position: absolute; opacity: 0; width: 0; height: 0; }
+.check-box {
+  display: flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px;
+  border: 2px solid var(--au-surface-border);
+  border-radius: 6px;
+  background: #fff;
+  color: transparent;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.check-box :deep(svg) { width: 12px; height: 12px; }
+.check input:checked + .check-box {
+  background: var(--au-green-500);
+  border-color: var(--au-green-500);
+  color: #fff;
+}
+.check input:focus-visible + .check-box { box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.18); }
+.check.is-error .check-box { border-color: var(--au-danger); }
+.check-text { font-size: 12px; line-height: 1.45; color: var(--au-ink-soft); }
+
+/* ── Navegación ── */
+.nav { display: flex; gap: 10px; margin-top: 6px; }
+.nav-back { width: auto; flex-shrink: 0; padding-inline: 18px; }
+.nav .au-btn-primary { flex: 1; }
+
+/* ── Modal de éxito ── */
+.ok-back {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  background: rgba(4, 28, 14, 0.62);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.ok-card {
+  width: 100%; max-width: 340px;
+  padding: 30px 26px;
+  text-align: center;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+  font-family: var(--au-font);
+}
+.ok-ring {
+  display: flex; align-items: center; justify-content: center;
+  width: 62px; height: 62px; margin: 0 auto 16px;
   border-radius: 50%;
-  animation: spinner-rotate 0.7s linear infinite;
+  background: #f0fdf4;
+  border: 2.5px solid var(--au-green-400);
+  color: var(--au-green-500);
+  animation: ok-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+.ok-ring :deep(svg) { width: 28px; height: 28px; }
+@keyframes ok-pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.ok-card h2 { margin: 0 0 6px; font-size: 19px; font-weight: 800; color: var(--au-ink); }
+.ok-card > p { margin: 0 0 18px; font-size: 13px; color: var(--au-ink-soft); }
+.ok-bar { height: 4px; border-radius: 99px; background: #eef4f0; overflow: hidden; }
+.ok-bar i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--au-green-400), var(--au-green-600));
+  animation: ok-fill 3s linear forwards;
+}
+@keyframes ok-fill { from { width: 0; } to { width: 100%; } }
+.ok-note { margin: 8px 0 18px; font-size: 11.5px; color: var(--au-green-600); font-weight: 600; }
 
-@keyframes spinner-rotate {
-  to { transform: translateY(-50%) rotate(360deg); }
-}
+.pop-enter-active { transition: opacity 0.25s; }
+.pop-leave-active { transition: opacity 0.2s; }
+.pop-enter-from, .pop-leave-to { opacity: 0; }
 </style>

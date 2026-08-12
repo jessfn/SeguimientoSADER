@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import './assets/main.css'
+import './styles/auth.css'
 import Sidebar from './components/Sidebar.vue'
 
 // ── Propagación de identidad para auditoría ───────────────────────────────────
@@ -9,7 +10,15 @@ import Sidebar from './components/Sidebar.vue'
 // API (fetch y XMLHttpRequest/axios). Esto permite que el backend identifique con
 // certeza quién realiza cada acción, sin tocar cada servicio individualmente.
 ;(function setupAuditPropagation() {
-  const API_HOST = 'apipwa.sembrandodatos.com'
+  // El host del API se deriva de VITE_API_URL para que la propagación del token
+  // siga al backend configurado en cada entorno. Antes estaba fijo al host de
+  // otro proyecto, por lo que el header Authorization nunca se inyectaba.
+  let API_HOST = ''
+  try {
+    API_HOST = new URL(import.meta.env.VITE_API_URL).host
+  } catch (e) {
+    console.warn('VITE_API_URL no es una URL válida; no se propagará el token de auditoría.')
+  }
 
   // Id de sesión estable por pestaña
   let sid = sessionStorage.getItem('_asid')
@@ -19,7 +28,7 @@ import Sidebar from './components/Sidebar.vue'
   }
 
   const isApi = (url) => {
-    try { return typeof url === 'string' && url.indexOf(API_HOST) !== -1 } catch (e) { return false }
+    try { return !!API_HOST && typeof url === 'string' && url.indexOf(API_HOST) !== -1 } catch (e) { return false }
   }
 
   // fetch
