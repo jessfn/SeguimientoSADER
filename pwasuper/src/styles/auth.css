@@ -54,6 +54,11 @@
    Layout base
    ========================================================================== */
 
+/* Base oscura mientras se cruzan dos pantallas de autenticación: durante el
+   desvanecido la vista saliente llega a opacity 0 y, sin esto, se veria el
+   fondo claro de la aplicación por debajo. */
+.auth-route { background: var(--au-green-900); }
+
 .au-root {
   position: fixed;
   inset: 0;

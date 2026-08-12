@@ -551,12 +551,21 @@ const handleCargoSaved = (cargo) => {
 const currentUserId = computed(() => {
   return userData.value?.id || null;
 });
+
+// Rutas de autenticación: traen su propio fondo a pantalla completa.
+const esRutaAuth = computed(() =>
+  ['Login', 'Register', 'ForgotPassword'].includes(route.name)
+);
 </script>
 
 <template>
-  <div class="min-h-screen liquid-glass-bg relative fullscreen-bg">
-    <!-- Fondo de vidrio líquido con burbujas verdes -->
-    <div class="absolute inset-0 z-0 fullscreen-layer">
+  <div class="min-h-screen liquid-glass-bg relative fullscreen-bg" :class="{ 'auth-route': esRutaAuth }">
+    <!--
+      El fondo decorativo claro se omite en las pantallas de autenticación:
+      esas vistas traen su propio fondo oscuro a pantalla completa y, al
+      cruzar de una a otra, el desvanecido dejaba ver este fondo claro.
+    -->
+    <div v-if="!esRutaAuth" class="absolute inset-0 z-0 fullscreen-layer">
       <!-- Degradado base blanco-verde más intenso -->
       <div class="absolute inset-0 bg-gradient-to-br from-green-50 via-emerald-100 to-green-200"></div>
       
