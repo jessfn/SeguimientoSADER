@@ -1,5 +1,11 @@
+<!--
+  Raíz única obligatoria: App.vue envuelve el <router-view> en
+  <transition mode="out-in">, y <Transition> de Vue 3 no puede animar un
+  componente con varios nodos raíz — al navegar renderizaría en blanco.
+-->
 <template>
-  <AuthLayout>
+  <div class="auth-page">
+    <AuthLayout>
     <div class="au-card-head">
       <h1>Bienvenido de vuelta</h1>
       <p>Ingresa tus credenciales para continuar</p>
@@ -69,9 +75,10 @@
     </div>
 
     <p class="au-copy card-copy">© 2026 SADER · Todos los derechos reservados</p>
-  </AuthLayout>
+    </AuthLayout>
 
-  <SupportBubbleLogin />
+    <SupportBubbleLogin />
+  </div>
 </template>
 
 <script setup>

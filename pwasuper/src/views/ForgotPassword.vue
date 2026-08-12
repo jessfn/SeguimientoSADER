@@ -1,4 +1,10 @@
+<!--
+  Raíz única obligatoria: App.vue envuelve el <router-view> en
+  <transition mode="out-in">, y <Transition> de Vue 3 no puede animar un
+  componente con varios nodos raíz — al navegar renderizaría en blanco.
+-->
 <template>
+  <div class="auth-page">
   <AuthLayout badge="Recuperación de acceso"
               desc="Verifica tu correo registrado y define una nueva contraseña para volver a entrar."
               :features="['Verificación en dos pasos', 'Tu cuenta no se bloquea', 'Acceso inmediato al terminar']">
@@ -129,6 +135,7 @@
       </div>
     </Transition>
   </Teleport>
+  </div>
 </template>
 
 <script setup>
