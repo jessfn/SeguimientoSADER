@@ -200,25 +200,42 @@
    Tarjeta
    ========================================================================== */
 
-/* Halo detrás de la tarjeta: aro degradado suave, maximalista sin ser ruidoso */
+/* Halo detrás de la tarjeta: dos resplandores borrosos que respiran y
+   flotan — sin bordes geométricos duros, nada de cuadrados girando. */
 .au-card-wrap {
   position: relative;
   width: 100%;
+  isolation: isolate;
 }
-.au-card-wrap::before {
+.au-card-wrap::before,
+.au-card-wrap::after {
   content: '';
   position: absolute;
-  inset: -3px;
-  border-radius: calc(var(--au-r-lg) + 3px);
-  background: conic-gradient(from 220deg,
-    var(--au-green-300), var(--au-gold) 30%, var(--au-green-500) 55%,
-    var(--au-green-200) 75%, var(--au-green-300) 100%);
-  opacity: 0.55;
-  filter: blur(1px);
   z-index: -1;
-  animation: au-halo-spin 10s linear infinite;
+  width: 72%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(46px);
+  pointer-events: none;
 }
-@keyframes au-halo-spin { to { filter: hue-rotate(360deg) blur(1px); } }
+.au-card-wrap::before {
+  top: -14%; left: -12%;
+  background: radial-gradient(circle, rgba(74, 222, 128, 0.55) 0%, transparent 72%);
+  animation: au-halo-a 9s ease-in-out infinite;
+}
+.au-card-wrap::after {
+  bottom: -16%; right: -12%;
+  background: radial-gradient(circle, rgba(245, 196, 81, 0.4) 0%, transparent 72%);
+  animation: au-halo-b 11s ease-in-out infinite;
+}
+@keyframes au-halo-a {
+  0%, 100% { transform: translate(0, 0) scale(1);     opacity: 0.75; }
+  50%      { transform: translate(4%, 6%) scale(1.15); opacity: 1; }
+}
+@keyframes au-halo-b {
+  0%, 100% { transform: translate(0, 0) scale(1);      opacity: 0.6; }
+  50%      { transform: translate(-5%, -4%) scale(1.2); opacity: 0.9; }
+}
 
 .au-card {
   position: relative;
@@ -619,7 +636,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .au-mesh span, .au-mesh::before, .au-mesh::after,
-  .au-dust i, .au-card, .au-card > *,
+  .au-dust i, .au-card, .au-card > *, .au-card-wrap::before, .au-card-wrap::after,
   .au-wordmark b, .au-btn-primary::after { animation: none !important; }
   .au-card > * { opacity: 1; }
 }
