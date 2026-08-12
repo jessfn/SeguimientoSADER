@@ -1,56 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16">
   <defs>
-    <style>
-      .flower-group {
-        transform-origin: 8px 8px;
-        animation: spin 4s linear infinite;
-      }
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        25% { transform: rotate(90deg); }
-        50% { transform: rotate(180deg); }
-        75% { transform: rotate(270deg); }
-        100% { transform: rotate(360deg); }
-      }
-      .petal {
-        fill: #4ade80;
-        opacity: 0.95;
-      }
-      .petal-accent {
-        fill: #22c55e;
-        opacity: 0.8;
-      }
-      .center {
-        fill: #ffffff;
-        stroke: #16a34a;
-        stroke-width: 0.3;
-      }
-      .center-dot {
-        fill: #16a34a;
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .flower-group {
-          animation: none;
-        }
-      }
-    </style>
+    <linearGradient id="saderFavicon16Grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="55%" stop-color="#15803d"/>
+      <stop offset="100%" stop-color="#0f4c26"/>
+    </linearGradient>
+    <linearGradient id="saderFavicon16Accent" x1="9" y1="22" x2="26" y2="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f5c451"/>
+      <stop offset="100%" stop-color="#d99a2b"/>
+    </linearGradient>
   </defs>
-  
-  <g class="flower-group">
-    <!-- Pétalos principales -->
-    <ellipse class="petal" cx="8" cy="4" rx="1.5" ry="3" />
-    <ellipse class="petal" cx="12" cy="8" rx="3" ry="1.5" />
-    <ellipse class="petal" cx="8" cy="12" rx="1.5" ry="3" />
-    <ellipse class="petal" cx="4" cy="8" rx="3" ry="1.5" />
-    
-    <!-- Pétalos diagonales -->
-    <ellipse class="petal-accent" cx="11.3" cy="4.7" rx="1.2" ry="2.5" transform="rotate(45 11.3 4.7)" />
-    <ellipse class="petal-accent" cx="11.3" cy="11.3" rx="1.2" ry="2.5" transform="rotate(135 11.3 11.3)" />
-    <ellipse class="petal-accent" cx="4.7" cy="11.3" rx="1.2" ry="2.5" transform="rotate(225 4.7 11.3)" />
-    <ellipse class="petal-accent" cx="4.7" cy="4.7" rx="1.2" ry="2.5" transform="rotate(315 4.7 4.7)" />
-    
-    <!-- Centro de la flor -->
-    <circle class="center" cx="8" cy="8" r="2" />
-    <circle class="center-dot" cx="8" cy="8" r="0.8" />
-  </g>
+  <rect x="1" y="1" width="30" height="30" rx="9" fill="url(#saderFavicon16Grad)"/>
+  <path d="M16 24c-4.2 0-7.4-3.2-7.4-7.4 0-3.8 2.6-7 6.4-7.7 0.3 3.8 1 6.4 2.9 8.6 1.9-2.9 2.2-5.8 1.9-9.3 3.8 1 6.1 4.2 6.1 8.3 0 4.2-3.2 7.4-7.4 7.4z" fill="#fff" opacity="0.97"/>
+  <circle cx="23.6" cy="9.6" r="2.3" fill="url(#saderFavicon16Accent)"/>
 </svg>

@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Sembrando Vida: CONTROL",
-  "short_name": "Sembrando Vida",
+  "name": "SADER: App de Seguimiento",
+  "short_name": "SADER",
   "description": "Sistema de registro de asistencia y actividades con funcionalidad offline",
   "start_url": "/",
   "scope": "/",

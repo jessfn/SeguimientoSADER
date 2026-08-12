@@ -12,101 +12,14 @@
     <!-- Cabecera del sidebar con logo animado -->
     <div class="sidebar-header">
       <div class="logo-container">
-        <!-- Flor SVG girando como en LoginView -->
+        <!-- Ícono SADER -->
         <div class="logo-animation">
-          <svg class="logo-flower-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="petalGradientSidebar" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#dcfce7;stop-opacity:1" />
-                <stop offset="30%" style="stop-color:#bbf7d0;stop-opacity:1" />
-                <stop offset="60%" style="stop-color:#86efac;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#4ade80;stop-opacity:1" />
-              </linearGradient>
-              <linearGradient id="centerGradientSidebar" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
-                <stop offset="50%" style="stop-color:#16a34a;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#15803d;stop-opacity:1" />
-              </linearGradient>
-              <filter id="petalGlowSidebar" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
-                <feMerge> 
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-              <filter id="centerShadowSidebar" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#15803d" flood-opacity="0.4"/>
-              </filter>
-            </defs>
-            
-            <!-- Grupo de la flor que girará como una unidad -->
-            <g class="flower-rotating-sidebar">
-              <!-- Pétalos de la flor (8 pétalos) -->
-              <!-- Pétalo superior -->
-              <ellipse cx="50" cy="25" rx="8" ry="15" 
-                       fill="url(#petalGradientSidebar)" filter="url(#petalGlowSidebar)"/>
-              
-              <!-- Pétalo superior derecho -->
-              <ellipse cx="65" cy="35" rx="8" ry="15" 
-                       fill="url(#petalGradientSidebar)" filter="url(#petalGlowSidebar)"
-                       transform="rotate(45 65 35)"/>
-              
-              <!-- Pétalo derecho -->
-              <ellipse cx="75" cy="50" rx="8" ry="15" 
-                       fill="url(#petalGradientSidebar)" filter="url(#petalGlowSidebar)"
-                       transform="rotate(90 75 50)"/>
-              
-              <!-- Pétalo inferior derecho -->
-              <ellipse cx="65" cy="65" rx="8" ry="15" 
-                       fill="url(#petalGradientSidebar)" filter="url(#petalGlowSidebar)"
-                       transform="rotate(135 65 65)"/>
-              
-              <!-- Pétalo inferior -->
-              <ellipse cx="50" cy="75" rx="8" ry="15" 
-                       fill="url(#petalGradientSidebar)" filter="url(#petalGlowSidebar)"
-                       transform="rotate(180 50 75)"/>
-              
-              <!-- Pétalo inferior izquierdo -->
-              <ellipse cx="35" cy="65" rx="8" ry="15" 
-                       fill="url(#petalGradientSidebar)" filter="url(#petalGlowSidebar)"
-                       transform="rotate(225 35 65)"/>
-              
-              <!-- Pétalo izquierdo -->
-              <ellipse cx="25" cy="50" rx="8" ry="15" 
-                       fill="url(#petalGradientSidebar)" filter="url(#petalGlowSidebar)"
-                       transform="rotate(270 25 50)"/>
-              
-              <!-- Pétalo superior izquierdo -->
-              <ellipse cx="35" cy="35" rx="8" ry="15" 
-                       fill="url(#petalGradientSidebar)" filter="url(#petalGlowSidebar)"
-                       transform="rotate(315 35 35)"/>
-              
-              <!-- Centro de la flor -->
-              <circle cx="50" cy="50" r="12" 
-                      fill="url(#centerGradientSidebar)" filter="url(#centerShadowSidebar)"/>
-              
-              <!-- Detalles del centro -->
-              <circle cx="50" cy="50" r="8" 
-                      fill="#22c55e" opacity="0.8"/>
-              <circle cx="47" cy="47" r="3" 
-                      fill="#86efac" opacity="0.6"/>
-              
-              <!-- Pequeños detalles en los pétalos -->
-              <circle cx="50" cy="30" r="1.5" fill="#22c55e" opacity="0.7"/>
-              <circle cx="62" cy="38" r="1.5" fill="#22c55e" opacity="0.7"/>
-              <circle cx="70" cy="50" r="1.5" fill="#22c55e" opacity="0.7"/>
-              <circle cx="62" cy="62" r="1.5" fill="#22c55e" opacity="0.7"/>
-              <circle cx="50" cy="70" r="1.5" fill="#22c55e" opacity="0.7"/>
-              <circle cx="38" cy="62" r="1.5" fill="#22c55e" opacity="0.7"/>
-              <circle cx="30" cy="50" r="1.5" fill="#22c55e" opacity="0.7"/>
-              <circle cx="38" cy="38" r="1.5" fill="#22c55e" opacity="0.7"/>
-            </g>
-          </svg>
+          <SaderLogo :size="42" icon-only dark class="sidebar-logo-mark" />
         </div>
-        
+
         <!-- Texto del logo con efecto de brillo -->
         <div class="logo-text">
-          <h1 class="brand-name">SEMBRANDO VIDA</h1>
+          <h1 class="brand-name">SADER</h1>
           <p class="brand-tagline">App de Seguimiento</p>
           
           <!-- Información del usuario - Liquid glass, fondo fluido animado -->
@@ -496,6 +409,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import authService from '../services/authService'
+import SaderLogo from './SaderLogo.vue'
 
 // Router
 const router = useRouter()
@@ -856,35 +770,11 @@ const onLeave = (el) => {
   justify-content: center;
 }
 
-/* SVG de la flor girando como en LoginView */
-.logo-flower-svg {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
+.sidebar-logo-mark {
+  transition: transform 0.25s ease;
 }
-
-/* Animaciones del logo de flor girando igual que en LoginView */
-.flower-rotating-sidebar {
-  animation: smoothRotationSidebar 6s linear infinite;
-  transform-origin: 50px 50px;
-}
-
-@keyframes smoothRotationSidebar {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Efectos hover para la nueva animación SVG */
-.logo-animation:hover .logo-flower-svg {
-  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.2));
-}
-
-.logo-animation:hover .flower-rotating-sidebar {
-  animation-duration: 4s;
+.logo-animation:hover .sidebar-logo-mark {
+  transform: scale(1.06) rotate(-2deg);
 }
 
 .logo-text {

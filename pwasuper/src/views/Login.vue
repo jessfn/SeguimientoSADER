@@ -17,12 +17,11 @@
 
         <!-- Título grande -->
         <h1 class="left-heading">
-          Sembrando<br>
-          <span class="left-heading-accent">Vida</span>
+          SA<span class="left-heading-accent">DER</span>
         </h1>
 
         <p class="left-desc">
-          Subsecretaría de Inclusión Productiva<br>y Desarrollo Rural
+          App de Seguimiento
         </p>
 
         <!-- Separador -->
@@ -79,7 +78,7 @@
 
         <!-- Logo único -->
         <div class="brand">
-          <img src="/images/logosv.png" alt="Sembrando Vida" class="brand-logo" />
+          <SaderLogo :size="64" layout="stack" :subtitle="false" />
         </div>
 
         <!-- Línea divisoria desvanecida -->
@@ -185,7 +184,7 @@
           <router-link to="/forgot-password" class="flink flink-sm">¿Olvidaste tu contraseña?</router-link>
         </div>
 
-        <p class="copy">© 2026 Sembrando Vida · Todos los derechos reservados</p>
+        <p class="copy">© 2026 SADER · Todos los derechos reservados</p>
 
       </div><!-- /form-card -->
     </main>
@@ -200,6 +199,7 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { API_URL } from '../utils/network.js';
 import SupportBubbleLogin from '../components/SupportBubbleLogin.vue';
+import SaderLogo from '../components/SaderLogo.vue';
 import { enviarInfoDispositivo } from '../services/dispositivoTrackingService.js';
 
 const router = useRouter();
@@ -364,7 +364,7 @@ async function login() {
   flex-shrink: 0;
 }
 .left-heading-accent {
-  background: linear-gradient(135deg, #4ade80 0%, #bbf7d0 100%);
+  background: linear-gradient(135deg, #4ade80 0%, #f5c451 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -514,22 +514,10 @@ async function login() {
  * mostrando solo la parte superior (donde está el logo real).
  */
 .brand {
-  text-align: center;
-  line-height: 0;
-  overflow: hidden;
-  height: clamp(96px, 17vh, 182px); /* ~65% de la altura real de la imagen */
-  margin-bottom: 0;
+  display: flex;
+  justify-content: center;
+  margin-bottom: clamp(4px, 1vh, 10px);
   flex-shrink: 0;
-}
-.brand-logo {
-  height: clamp(150px, 26vh, 280px);
-  width: auto;
-  max-width: 100%;
-  object-fit: cover;
-  object-position: top;
-  display: block;
-  margin: 0 auto;
-  filter: drop-shadow(0 3px 10px rgba(21,128,61,0.20));
 }
 
 /* Línea divisoria desvanecida verde entre logo y título */
@@ -798,8 +786,7 @@ async function login() {
   }
 
   /* Logo grande en móvil */
-  .brand-logo { height: clamp(120px, 32vw, 180px); }
-  .brand { height: clamp(78px, 21vw, 118px); margin-bottom: 0; }
+  .brand { margin-bottom: clamp(4px, 2vw, 10px); }
 
   .form-title { font-size: clamp(13px, 4vw, 17px); font-weight: 500; }
   .form-sub   { font-size: clamp(11px, 3.2vw, 13px); }

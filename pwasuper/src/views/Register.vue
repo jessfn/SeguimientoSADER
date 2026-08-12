@@ -48,6 +48,7 @@
 
       <!-- Header Section -->
       <header class="register-hero">
+        <SaderLogo :size="44" layout="row" :subtitle="false" class="register-brand" />
         <p class="hero-instruction">Completa el formulario con tus datos personales y laborales para crear tu cuenta en el sistema.</p>
       </header>
 
@@ -521,6 +522,7 @@ import { reactive, ref, onMounted, computed, watch, Teleport, Transition } from 
 import { useRouter } from 'vue-router';
 import { apiService } from '../services/apiService.js';
 import { checkInternetConnection, getOfflineMessage } from '../utils/network.js';
+import SaderLogo from '../components/SaderLogo.vue';
 
 const router = useRouter();
 const loading = ref(false);
@@ -1156,6 +1158,11 @@ function goToLogin() {
   padding: 20px 0 16px;
   max-width: 500px;
   margin: 0 auto;
+}
+
+.register-brand {
+  justify-content: center;
+  margin-bottom: 14px;
 }
 
 .hero-instruction {

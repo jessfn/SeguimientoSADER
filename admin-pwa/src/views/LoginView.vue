@@ -6,8 +6,7 @@
       <div class="image-overlay"></div>
 
       <div class="image-content">
-        <!-- Marca desvanecida, pequeña: identifica el programa -->
-        <p class="hero-brand">Sembrando Vida</p>
+        <SaderLogo :size="52" layout="stack" :subtitle="false" dark class="hero-logo" />
 
         <!-- Título principal del panel: más grande que la marca -->
         <h1 class="hero-title">
@@ -157,7 +156,8 @@
           </transition>
         </form>
 
-        <p class="footer-copy">© 2026 Sembrando Vida · Panel de Administración</p>
+        <div class="footer-brand"><SaderLogo :size="26" layout="row" :subtitle="false" dark /></div>
+        <p class="footer-copy">© 2026 SADER · Panel de Administración</p>
       </div>
     </main>
 
@@ -168,6 +168,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import authService from '../services/authService'
+import SaderLogo from '../components/SaderLogo.vue'
 
 const router = useRouter()
 
@@ -255,18 +256,9 @@ const login = async () => {
   overflow: hidden;
 }
 
-/* Marca "Sembrando Vida" — pequeña, desvanecida, estática (sin animación) */
-.hero-brand {
-  font-size: clamp(12px, 1.7vh, 15px);
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  margin: 0 0 clamp(4px, 1vh, 10px);
+.hero-logo {
+  margin: 0 0 clamp(10px, 2vh, 20px);
   flex-shrink: 0;
-  background: linear-gradient(90deg, rgba(187,247,208,0.55) 0%, rgba(74,222,128,0.85) 50%, rgba(187,247,208,0.55) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 /*
@@ -321,7 +313,7 @@ const login = async () => {
 .hero-divider {
   width: 44px;
   height: 2.5px;
-  background: linear-gradient(90deg, #4ade80, #86efac);
+  background: linear-gradient(90deg, #4ade80, #f5c451);
   border-radius: 99px;
   margin: 0 auto clamp(12px, 2.2vh, 24px);
   flex-shrink: 0;
@@ -656,11 +648,17 @@ const login = async () => {
 .err-enter-from, .err-leave-to { opacity: 0; transform: translateY(-6px); }
 
 /* ── Footer ── */
+.footer-brand {
+  display: flex;
+  justify-content: center;
+  margin: clamp(14px, 2.4vh, 26px) 0 6px;
+  flex-shrink: 0;
+}
 .footer-copy {
   text-align: center;
   font-size: clamp(9.5px, 1.2vh, 11.5px);
   color: #8fbb9e;
-  margin: clamp(14px, 2.4vh, 26px) 0 0;
+  margin: 0;
   flex-shrink: 0;
 }
 
