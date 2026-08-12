@@ -1,10 +1,10 @@
 <template>
-  <div class="apple-forgot bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 relative">
-    <!-- Elementos decorativos para mejorar el efecto de vidrio -->
-    <div class="absolute inset-0">
-      <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-green-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse-slow"></div>
-      <div class="absolute top-3/4 right-1/4 w-72 h-72 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse-slow" style="animation-delay: 2s;"></div>
-      <div class="absolute bottom-1/4 left-1/3 w-72 h-72 bg-teal-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse-slow" style="animation-delay: 4s;"></div>
+  <div class="apple-forgot register-mesh-bg relative">
+    <!-- Mesh de fondo: 100% CSS, sin imágenes externas (igual a Login/Register) -->
+    <div class="absolute inset-0" aria-hidden="true">
+      <div class="mesh-blob-r blob-r1"></div>
+      <div class="mesh-blob-r blob-r2"></div>
+      <div class="mesh-blob-r blob-r3"></div>
     </div>
 
     <!-- Success Modal -->
@@ -48,6 +48,7 @@
 
       <!-- Header Section -->
       <header class="forgot-hero">
+        <SaderLogo :size="44" layout="row" :subtitle="false" class="forgot-brand" />
         <p class="hero-instruction">Ingresa tu correo electrónico y tu nueva contraseña para recuperar el acceso a tu cuenta.</p>
       </header>
 
@@ -279,6 +280,7 @@ import { ref, computed, Teleport, Transition } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { API_URL, getBestApiUrl, checkInternetConnection, getOfflineMessage } from '../utils/network.js';
+import SaderLogo from '../components/SaderLogo.vue';
 
 const router = useRouter();
 const email = ref('');
@@ -512,6 +514,28 @@ async function resetPassword() {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.register-mesh-bg {
+  background: linear-gradient(160deg, #f3faf5 0%, #e8f6ec 45%, #ddf1e3 100%);
+  overflow: hidden;
+}
+.mesh-blob-r {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+.blob-r1 { width: 380px; height: 380px; top: -8%; left: -10%; background: radial-gradient(circle, rgba(74,222,128,0.35), transparent 70%); animation: rblob1 24s ease-in-out infinite; }
+.blob-r2 { width: 320px; height: 320px; bottom: -10%; right: -8%; background: radial-gradient(circle, rgba(21,128,61,0.30), transparent 70%); animation: rblob2 28s ease-in-out infinite; }
+.blob-r3 { width: 260px; height: 260px; top: 40%; right: 10%; background: radial-gradient(circle, rgba(245,196,81,0.22), transparent 70%); animation: rblob1 20s ease-in-out infinite reverse; }
+@keyframes rblob1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(5%, 6%) scale(1.1); } }
+@keyframes rblob2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-5%, -6%) scale(1.08); } }
+
+.forgot-brand {
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
 /* Scrollable Content */
 .forgot-content {
   height: 100%;
@@ -554,7 +578,7 @@ async function resetPassword() {
   padding: 8px 14px;
   background: rgba(255, 255, 255, 0.8);
   border-radius: 980px;
-  color: #06c;
+  color: #16a34a;
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
@@ -930,9 +954,9 @@ async function resetPassword() {
 .change-email-btn {
   padding: 6px 14px;
   background: transparent;
-  border: 1px solid #06c;
+  border: 1px solid #16a34a;
   border-radius: 8px;
-  color: #06c;
+  color: #16a34a;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -942,7 +966,7 @@ async function resetPassword() {
 }
 
 .change-email-btn:hover {
-  background: rgba(0, 102, 204, 0.05);
+  background: rgba(22, 163, 74, 0.06);
 }
 
 .change-email-btn:active {
@@ -963,7 +987,7 @@ async function resetPassword() {
 }
 
 .forgot-footer a {
-  color: #06c;
+  color: #16a34a;
   font-weight: 600;
   text-decoration: none;
 }
