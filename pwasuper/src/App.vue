@@ -289,7 +289,12 @@ const stopUserDataCheck = () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  // Esperar a que el router resuelva la navegación inicial antes de leer route.name;
+  // si no, en una carga directa a /register route.name aún es undefined aquí y
+  // el bloque de abajo redirige incorrectamente a /login.
+  await router.isReady();
+
   // Verificar el estado de autenticación al cargar la app
   const storedUser = localStorage.getItem('user');
   
