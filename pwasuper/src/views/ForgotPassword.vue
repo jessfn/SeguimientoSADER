@@ -413,12 +413,12 @@ function goToLogin() {
 .meter { display: flex; align-items: center; gap: 9px; }
 .meter-bar { flex: 1; height: 4px; border-radius: 99px; background: #e6eee9; overflow: hidden; }
 .meter-bar i { display: block; height: 100%; border-radius: 99px; transition: width 0.3s ease, background 0.3s ease; }
-.meter-bar.lv-0 i, .meter-bar.lv-1 i { background: #f43f5e; }
+.meter-bar.lv-0 i, .meter-bar.lv-1 i { background: var(--au-danger); }
 .meter-bar.lv-2 i { background: var(--au-gold); }
 .meter-bar.lv-3 i { background: var(--au-green-400); }
 .meter-bar.lv-4 i { background: var(--au-green-600); }
 .meter em { font-style: normal; font-size: 10.5px; font-weight: 600; white-space: nowrap; }
-.meter em.lv-0, .meter em.lv-1 { color: #e11d48; }
+.meter em.lv-0, .meter em.lv-1 { color: var(--au-danger-ink); }
 .meter em.lv-2 { color: var(--au-gold-deep); }
 .meter em.lv-3, .meter em.lv-4 { color: var(--au-green-600); }
 

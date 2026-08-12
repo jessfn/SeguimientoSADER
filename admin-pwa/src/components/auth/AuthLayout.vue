@@ -43,10 +43,12 @@
 
       <!-- Columna del formulario -->
       <main class="pane">
-        <div class="au-card" :style="{ maxWidth: maxWidth }">
-          <!-- Wordmark visible solo cuando la columna de marca está oculta -->
-          <span class="au-wordmark card-mark"><b>SADER</b></span>
-          <slot />
+        <div class="au-card-wrap" :style="{ maxWidth: maxWidth }">
+          <div class="au-card">
+            <!-- Wordmark visible solo cuando la columna de marca está oculta -->
+            <span class="au-wordmark card-mark"><b>SADER</b></span>
+            <slot />
+          </div>
         </div>
 
         <p class="au-copy pane-copy">© 2026 SADER · Todos los derechos reservados</p>
@@ -164,7 +166,7 @@ defineProps({
   flex-direction: column;
   align-items: center;
 }
-.pane > .au-card { margin: 0 auto; }
+.pane > .au-card-wrap { margin: 0 auto; }
 .pane-copy { display: none; }
 
 .card-mark {
