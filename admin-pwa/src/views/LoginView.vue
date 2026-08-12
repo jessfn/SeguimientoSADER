@@ -191,9 +191,9 @@ const login = async () => {
 *, *::before, *::after { box-sizing: border-box; }
 
 .auth-screen {
-  position: relative;
-  min-height: 100vh;
-  width: 100%;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
   overflow-x: hidden;
   font-family: -apple-system, 'SF Pro Display', 'Inter', system-ui, 'Segoe UI', sans-serif;
   color-scheme: light only;
@@ -253,10 +253,12 @@ const login = async () => {
   position: relative;
   z-index: 1;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: clamp(12px, 2.5vh, 28px) clamp(14px, 3vw, 28px);
 }
 
 /* ── Panel de marca ── */
@@ -266,38 +268,38 @@ const login = async () => {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  max-width: 380px;
+  max-width: 360px;
   color: #fff;
 }
-.brand-panel-logo { margin-bottom: 20px; }
+.brand-panel-logo { margin-bottom: clamp(10px, 2vh, 18px); }
 
 .brand-title {
-  font-size: clamp(26px, 3.4vw, 38px);
+  font-size: clamp(22px, 3.6vh, 34px);
   font-weight: 800;
   letter-spacing: -1px;
-  margin: 0 0 10px;
+  margin: 0 0 clamp(6px, 1.2vh, 10px);
   background: linear-gradient(120deg, #bbf7d0 0%, #4ade80 50%, #f5c451 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 .brand-subtitle {
-  font-size: 13px;
+  font-size: clamp(11px, 1.5vh, 13px);
   color: rgba(255,255,255,0.65);
-  line-height: 1.6;
-  margin: 0 0 20px;
+  line-height: 1.5;
+  margin: 0 0 clamp(10px, 1.8vh, 18px);
 }
 .brand-divider {
   width: 44px; height: 2.5px;
   background: linear-gradient(90deg, #4ade80, #f5c451);
   border-radius: 99px;
-  margin: 0 0 20px;
+  margin: 0 0 clamp(10px, 1.8vh, 18px);
 }
 .brand-tagline {
   font-size: 14.5px;
   font-weight: 600;
   color: rgba(255,255,255,0.9);
-  margin: 0 0 30px;
+  margin: 0 0 clamp(14px, 2.6vh, 24px);
 }
 
 .brand-stats {
@@ -305,7 +307,7 @@ const login = async () => {
   margin: 0; padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: clamp(6px, 1.2vh, 10px);
   width: 100%;
   max-width: 270px;
 }
@@ -339,17 +341,16 @@ const login = async () => {
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 24px 18px;
 }
 .form-card {
   position: relative;
   width: 100%;
-  max-width: 400px;
+  max-width: 380px;
   display: flex;
   flex-direction: column;
   background: linear-gradient(155deg, #1b7a3d 0%, #166534 55%, #124d29 100%);
-  border-radius: 24px;
-  padding: clamp(24px, 4vh, 40px) clamp(20px, 3.5vw, 36px);
+  border-radius: 22px;
+  padding: clamp(18px, 3.2vh, 30px) clamp(18px, 3vw, 28px);
   border: 1px solid rgba(255,255,255,0.12);
   box-shadow:
     0 1px 0 0 rgba(255,255,255,0.16) inset,
@@ -362,22 +363,22 @@ const login = async () => {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.form-header { margin-bottom: 24px; }
+.form-header { margin-bottom: clamp(14px, 2.6vh, 22px); }
 .form-title {
-  font-size: clamp(19px, 3vh, 26px);
+  font-size: clamp(18px, 2.8vh, 24px);
   font-weight: 700;
   color: #fff;
   margin: 0 0 6px;
   letter-spacing: -0.6px;
 }
 .form-desc {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 400;
   color: #bcdec9;
   margin: 0;
 }
 
-.login-form { display: flex; flex-direction: column; gap: 18px; }
+.login-form { display: flex; flex-direction: column; gap: clamp(10px, 1.8vh, 16px); }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-label {
   font-size: 12.5px;
@@ -508,15 +509,13 @@ const login = async () => {
 @media (min-width: 1024px) {
   .auth-shell {
     flex-direction: row;
-    gap: clamp(50px, 7vw, 120px);
-    padding: 32px;
+    gap: clamp(30px, 5vw, 80px);
   }
   .brand-panel { display: flex; }
-  .form-panel { width: auto; padding: 0; }
+  .form-panel { width: auto; }
 }
 
 @media (max-width: 1023px) {
-  .form-panel { min-height: 100vh; align-items: center; }
   .input-wrap input { font-size: 16px; }
 }
 

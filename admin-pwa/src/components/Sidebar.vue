@@ -12,11 +12,6 @@
     <!-- Cabecera del sidebar con logo animado -->
     <div class="sidebar-header">
       <div class="logo-container">
-        <!-- Ícono SADER -->
-        <div class="logo-animation">
-          <SaderLogo :size="42" icon-only dark class="sidebar-logo-mark" />
-        </div>
-
         <!-- Texto del logo con efecto de brillo -->
         <div class="logo-text">
           <h1 class="brand-name">SADER</h1>
@@ -409,7 +404,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import authService from '../services/authService'
-import SaderLogo from './SaderLogo.vue'
 
 // Router
 const router = useRouter()
@@ -758,23 +752,6 @@ const onLeave = (el) => {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-}
-
-.logo-animation {
-  width: 42px;
-  height: 42px;
-  position: relative;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sidebar-logo-mark {
-  transition: transform 0.25s ease;
-}
-.logo-animation:hover .sidebar-logo-mark {
-  transform: scale(1.06) rotate(-2deg);
 }
 
 .logo-text {

@@ -515,19 +515,19 @@ async function resetPassword() {
 }
 
 .register-mesh-bg {
-  background: linear-gradient(160deg, #f3faf5 0%, #e8f6ec 45%, #ddf1e3 100%);
+  background: linear-gradient(150deg, #052e18 0%, #0b3d22 30%, #0f4c26 55%, #14622f 100%);
   overflow: hidden;
 }
 .mesh-blob-r {
   position: absolute;
   border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.45;
+  filter: blur(70px);
+  opacity: 0.55;
   pointer-events: none;
 }
-.blob-r1 { width: 380px; height: 380px; top: -8%; left: -10%; background: radial-gradient(circle, rgba(74,222,128,0.35), transparent 70%); animation: rblob1 24s ease-in-out infinite; }
-.blob-r2 { width: 320px; height: 320px; bottom: -10%; right: -8%; background: radial-gradient(circle, rgba(21,128,61,0.30), transparent 70%); animation: rblob2 28s ease-in-out infinite; }
-.blob-r3 { width: 260px; height: 260px; top: 40%; right: 10%; background: radial-gradient(circle, rgba(245,196,81,0.22), transparent 70%); animation: rblob1 20s ease-in-out infinite reverse; }
+.blob-r1 { width: 46vw; height: 46vw; max-width: 560px; max-height: 560px; top: -12%; left: -8%; background: radial-gradient(circle, rgba(74,222,128,0.5), transparent 70%); animation: rblob1 24s ease-in-out infinite; }
+.blob-r2 { width: 38vw; height: 38vw; max-width: 460px; max-height: 460px; bottom: -12%; right: -8%; background: radial-gradient(circle, rgba(21,128,61,0.55), transparent 70%); animation: rblob2 28s ease-in-out infinite; }
+.blob-r3 { width: 28vw; height: 28vw; max-width: 360px; max-height: 360px; top: 40%; right: 10%; background: radial-gradient(circle, rgba(245,196,81,0.28), transparent 70%); animation: rblob1 20s ease-in-out infinite reverse; }
 @keyframes rblob1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(5%, 6%) scale(1.1); } }
 @keyframes rblob2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-5%, -6%) scale(1.08); } }
 
@@ -624,7 +624,7 @@ async function resetPassword() {
 .hero-instruction {
   font-size: 13px;
   line-height: 1.5;
-  color: #86868b;
+  color: rgba(255,255,255,0.72);
   font-weight: 400;
   margin: 0;
   text-align: center;
@@ -983,11 +983,11 @@ async function resetPassword() {
 
 .forgot-footer p {
   font-size: 13px;
-  color: #86868b;
+  color: rgba(255,255,255,0.65);
 }
 
 .forgot-footer a {
-  color: #16a34a;
+  color: #4ade80;
   font-weight: 600;
   text-decoration: none;
 }

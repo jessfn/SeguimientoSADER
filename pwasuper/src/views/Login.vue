@@ -6,7 +6,6 @@
       <span class="mesh-blob blob-2"></span>
       <span class="mesh-blob blob-3"></span>
       <span class="mesh-blob blob-4"></span>
-      <span class="mesh-grain"></span>
     </div>
 
     <div class="auth-shell">
@@ -18,7 +17,7 @@
             Sistema Oficial de Seguimiento
           </div>
 
-          <SaderLogo :size="72" layout="stack" :subtitle="true" dark class="brand-panel-logo" />
+          <SaderLogo layout="stack" :subtitle="true" dark title-size="clamp(30px, 5vh, 46px)" class="brand-panel-logo" />
 
           <p class="brand-panel-desc">
             Plataforma de seguimiento y reporte de actividades en campo,
@@ -64,9 +63,8 @@
       <!-- Panel de formulario -->
       <main class="form-panel">
         <div class="form-card">
-          <SaderLogo :size="56" layout="stack" :subtitle="false" class="form-card-logo" />
-
           <div class="form-heading">
+            <SaderLogo layout="row" :subtitle="false" class="form-card-logo" />
             <h1>Bienvenido de vuelta</h1>
             <p>Ingresa tus credenciales para continuar</p>
           </div>
@@ -234,9 +232,9 @@ async function login() {
 *, *::before, *::after { box-sizing: border-box; }
 
 .auth-screen {
-  position: relative;
-  min-height: 100vh;
-  width: 100%;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
   overflow-x: hidden;
   font-family: -apple-system, 'SF Pro Display', 'Inter', system-ui, 'Segoe UI', sans-serif;
   color-scheme: light only;
@@ -295,26 +293,20 @@ async function login() {
   0%, 100% { transform: translate(0, 0) scale(1); }
   50% { transform: translate(-8%, 10%) scale(1.15); }
 }
-.mesh-grain {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
-  background-size: 3px 3px;
-  opacity: 0.4;
-  mix-blend-mode: overlay;
-}
 
 /* ════════════════════════════════════════
-   SHELL
+   SHELL — pensado para caber en 100dvh sin scroll
    ════════════════════════════════════════ */
 .auth-shell {
   position: relative;
   z-index: 1;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: clamp(12px, 2.5vh, 28px) clamp(14px, 3vw, 28px);
 }
 
 /* ── Panel de marca (desktop/tablet) ── */
@@ -322,8 +314,8 @@ async function login() {
 .brand-panel-inner {
   display: flex;
   flex-direction: column;
-  gap: clamp(18px, 3vh, 32px);
-  max-width: 420px;
+  gap: clamp(12px, 2vh, 22px);
+  max-width: 400px;
   color: #fff;
 }
 .brand-badge {
@@ -335,7 +327,7 @@ async function login() {
   backdrop-filter: blur(8px);
   border-radius: 100px;
   padding: 6px 14px;
-  font-size: 12px;
+  font-size: clamp(10px, 1.3vh, 12px);
   font-weight: 600;
   letter-spacing: 0.4px;
   color: rgba(255,255,255,0.88);
@@ -350,9 +342,11 @@ async function login() {
 }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
+.brand-panel-logo :deep(.sader-logo) { justify-content: flex-start; }
+
 .brand-panel-desc {
-  font-size: 14.5px;
-  line-height: 1.6;
+  font-size: clamp(12px, 1.6vh, 14px);
+  line-height: 1.55;
   color: rgba(255,255,255,0.7);
   margin: 0;
 }
@@ -362,7 +356,7 @@ async function login() {
   margin: 0; padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: clamp(6px, 1.2vh, 10px);
 }
 .brand-features li {
   display: flex;
@@ -372,8 +366,8 @@ async function login() {
   border: 1px solid rgba(255,255,255,0.12);
   backdrop-filter: blur(6px);
   border-radius: 13px;
-  padding: 11px 16px;
-  font-size: 13px;
+  padding: clamp(8px, 1.4vh, 11px) 16px;
+  font-size: clamp(11px, 1.5vh, 13px);
   font-weight: 500;
   color: rgba(255,255,255,0.9);
   transition: background 0.2s;
@@ -381,33 +375,32 @@ async function login() {
 .brand-features li:hover { background: rgba(255,255,255,0.12); }
 .brand-feature-ico {
   display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; flex-shrink: 0;
+  width: 30px; height: 30px; flex-shrink: 0;
   background: rgba(74,222,128,0.16);
   border: 1px solid rgba(74,222,128,0.26);
   border-radius: 9px;
   color: #4ade80;
 }
-.brand-feature-ico svg { width: 16px; height: 16px; }
+.brand-feature-ico svg { width: 15px; height: 15px; }
 
 /* ── Tarjeta del formulario — liquid glass ── */
 .form-panel {
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 24px 18px;
 }
 .form-card {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
   background: rgba(255,255,255,0.9);
   backdrop-filter: blur(28px) saturate(1.4);
   -webkit-backdrop-filter: blur(28px) saturate(1.4);
   border: 1px solid rgba(255,255,255,0.6);
-  border-radius: 26px;
-  padding: clamp(26px, 4vh, 40px) clamp(22px, 4vw, 38px);
+  border-radius: 24px;
+  padding: clamp(20px, 3.4vh, 34px) clamp(20px, 3.4vw, 34px);
   box-shadow:
     0 1px 0 0 rgba(255,255,255,0.7) inset,
     0 30px 70px rgba(0,0,0,0.35),
@@ -419,19 +412,19 @@ async function login() {
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.form-card-logo { justify-content: center; margin-bottom: 18px; }
+.form-card-logo { justify-content: center; margin-bottom: 10px; }
 
-.form-heading { text-align: center; margin-bottom: 22px; }
+.form-heading { text-align: center; margin-bottom: clamp(14px, 2.4vh, 22px); }
 .form-heading h1 {
   margin: 0 0 4px;
-  font-size: clamp(19px, 2.6vh, 24px);
+  font-size: clamp(18px, 2.4vh, 22px);
   font-weight: 800;
   letter-spacing: -0.5px;
   color: #0f2e1c;
 }
 .form-heading p {
   margin: 0;
-  font-size: 13.5px;
+  font-size: clamp(12px, 1.5vh, 13.5px);
   color: #5b7f68;
 }
 
@@ -439,25 +432,25 @@ async function login() {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 11px 13px;
   background: #fff1f2;
   border: 1px solid #fecdd3;
   border-left: 3px solid #f43f5e;
   border-radius: 12px;
   color: #be123c;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   line-height: 1.4;
 }
 .alert-error svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
 .fade-down-enter-active, .fade-down-leave-active { transition: all 0.25s ease; }
 .fade-down-enter-from, .fade-down-leave-to { opacity: 0; transform: translateY(-8px); }
 
-.auth-form { display: flex; flex-direction: column; gap: 16px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
+.auth-form { display: flex; flex-direction: column; gap: clamp(10px, 1.8vh, 15px); }
+.field { display: flex; flex-direction: column; gap: 5px; }
 .field label {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   color: #2c4737;
 }
@@ -468,7 +461,7 @@ async function login() {
   align-items: center;
   background: #f7faf8;
   border: 1.5px solid #e3ece6;
-  border-radius: 14px;
+  border-radius: 13px;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 .field-shell:focus-within {
@@ -478,15 +471,15 @@ async function login() {
 }
 .field-shell svg:first-child {
   position: absolute;
-  left: 14px;
-  width: 17px; height: 17px;
+  left: 13px;
+  width: 16px; height: 16px;
   color: #9db6a9;
   pointer-events: none;
 }
 .field-shell input {
   width: 100%;
-  padding: 13px 42px;
-  font-size: 14.5px;
+  padding: clamp(10px, 1.7vh, 12px) 40px;
+  font-size: 14px;
   font-family: inherit;
   color: #0f2e1c;
   background: transparent;
@@ -505,8 +498,8 @@ async function login() {
 
 .field-action {
   position: absolute;
-  right: 10px;
-  width: 32px; height: 32px;
+  right: 9px;
+  width: 30px; height: 30px;
   display: flex; align-items: center; justify-content: center;
   background: none; border: none; cursor: pointer;
   color: #9db6a9; border-radius: 8px;
@@ -514,7 +507,7 @@ async function login() {
 }
 .field-action:hover:not(:disabled) { color: #16a34a; background: rgba(22,163,74,0.08); }
 .field-action:disabled { opacity: 0.4; cursor: not-allowed; }
-.field-action svg { width: 18px; height: 18px; }
+.field-action svg { width: 17px; height: 17px; }
 
 .btn-primary {
   display: flex;
@@ -522,15 +515,15 @@ async function login() {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 14px 24px;
-  margin-top: 4px;
-  font-size: 15px;
+  padding: clamp(11px, 1.9vh, 13px) 24px;
+  margin-top: 2px;
+  font-size: 14.5px;
   font-weight: 700;
   font-family: inherit;
   color: #fff;
   background: linear-gradient(135deg, #16a34a 0%, #0f4c26 100%);
   border: none;
-  border-radius: 14px;
+  border-radius: 13px;
   cursor: pointer;
   box-shadow: 0 6px 18px rgba(15,76,38,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
   transition: all 0.2s ease;
@@ -541,19 +534,19 @@ async function login() {
 }
 .btn-primary:active:not(:disabled) { transform: translateY(0); }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
-.btn-arrow { width: 17px; height: 17px; transition: transform 0.2s; }
+.btn-arrow { width: 16px; height: 16px; transition: transform 0.2s; }
 .btn-primary:hover:not(:disabled) .btn-arrow { transform: translateX(3px); }
-.spin { width: 18px; height: 18px; animation: rot 0.75s linear infinite; }
+.spin { width: 17px; height: 17px; animation: rot 0.75s linear infinite; }
 @keyframes rot { to { transform: rotate(360deg); } }
 
 .form-links {
   text-align: center;
-  margin-top: 22px;
+  margin-top: clamp(12px, 2vh, 18px);
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
 }
-.form-links p { font-size: 13px; color: #3f5f4c; margin: 0; }
+.form-links p { font-size: 12.5px; color: #3f5f4c; margin: 0; }
 .form-links a {
   color: #16a34a;
   font-weight: 600;
@@ -561,13 +554,13 @@ async function login() {
   transition: color 0.15s;
 }
 .form-links a:hover { color: #0f4c26; }
-.link-sm { font-size: 12.5px; color: #4b7a5a; font-weight: 600; }
+.link-sm { font-size: 12px; color: #4b7a5a; font-weight: 600; }
 
 .form-copy {
   text-align: center;
-  font-size: 11px;
+  font-size: 10.5px;
   color: #6b8b78;
-  margin: 24px 0 0;
+  margin: clamp(14px, 2vh, 20px) 0 0;
   letter-spacing: 0.2px;
 }
 
@@ -579,23 +572,21 @@ async function login() {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: clamp(40px, 6vw, 100px);
-    padding: 32px;
+    gap: clamp(30px, 5vw, 80px);
   }
   .brand-panel { display: flex; }
-  .form-panel { width: auto; padding: 0; }
+  .form-card-logo { display: none; } /* ya se muestra en el panel izquierdo */
 }
 
 /* ════════════════════════════════════════
    MÓVIL < 900px
    ════════════════════════════════════════ */
 @media (max-width: 899px) {
-  .form-panel { min-height: 100vh; align-items: center; }
   .field-shell input { font-size: 16px; } /* evita zoom auto en iOS */
 }
 
 @media (max-width: 380px) {
-  .form-card { padding: 22px 16px; border-radius: 20px; }
+  .form-card { padding: 18px 16px; border-radius: 20px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
