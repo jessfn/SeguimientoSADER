@@ -6,6 +6,12 @@
       <span class="b3"></span><span class="b4"></span>
     </div>
 
+    <!-- Partículas ascendentes (luciérnagas) sobre el mesh -->
+    <div class="au-dust" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i>
+      <i></i><i></i><i></i><i></i><i></i>
+    </div>
+
     <div class="shell" :class="{ 'shell-wide': wide }">
       <!-- Columna de marca (solo desktop) -->
       <aside class="brand">
