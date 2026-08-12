@@ -300,6 +300,12 @@
           <div class="privacy-head">
             <AuthIcon name="shield" />
             <h3>Aviso de Privacidad</h3>
+            <span class="privacy-head-hint">
+              Desliza
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </span>
           </div>
           <div class="privacy-body">
             <p><b>AVISO DE PRIVACIDAD PARA EL REGISTRO Y USO DE INFORMACIÓN MEDIANTE LA APLICACIÓN MÓVIL DE SEGUIMIENTO</b></p>
@@ -926,6 +932,7 @@ onUnmounted(() => {
 
 /* ── Aviso de privacidad ── */
 .privacy {
+  position: relative;
   border: 1px solid var(--au-surface-border);
   border-radius: var(--au-r-md);
   overflow: hidden;
@@ -939,13 +946,39 @@ onUnmounted(() => {
 }
 .privacy-head :deep(svg) { width: 15px; height: 15px; }
 .privacy-head h3 { margin: 0; font-size: 12.5px; font-weight: 700; color: var(--au-ink); }
+.privacy-head-hint {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 4px;
+  font-size: 9.5px; font-weight: 600;
+  color: var(--au-ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.privacy-head-hint svg { width: 11px; height: 11px; animation: au-scroll-cue 1.6s ease-in-out infinite; }
+@keyframes au-scroll-cue {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50%      { transform: translateY(3px); opacity: 1; }
+}
+
+/* Área con scroll propio: en móvil el contenido completo del aviso rara vez
+   cabe en pantalla, así que se desplaza dentro de su propio recuadro en vez
+   de alargar toda la tarjeta. Se marca con degradados arriba/abajo para que
+   sea obvio que hay más texto, y -webkit-overflow-scrolling da inercia en iOS. */
 .privacy-body {
-  max-height: 150px;
+  max-height: min(38vh, 220px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 12px 13px;
-  font-size: 11px;
-  line-height: 1.55;
+  font-size: 11.5px;
+  line-height: 1.6;
   color: var(--au-ink-soft);
+  background:
+    linear-gradient(#fff, transparent 24px) local,
+    linear-gradient(transparent calc(100% - 24px), #fff) local,
+    linear-gradient(#fff, #fff);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
 }
 .privacy-body p { margin: 0 0 8px; }
 .privacy-body p:last-child { margin-bottom: 0; }

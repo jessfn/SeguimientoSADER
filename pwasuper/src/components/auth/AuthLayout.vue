@@ -88,7 +88,14 @@ defineProps({
   align-items: center;
   justify-content: center;
   gap: clamp(28px, 5vw, 76px);
+  /* El fondo (au-mesh) sí llega detrás del notch/barra de estado gracias a
+     viewport-fit=cover, pero el contenido debe quedar por debajo de ella —
+     de lo contrario la tarjeta arranca pegada al reloj/batería del celular. */
   padding: clamp(16px, 3vh, 34px) clamp(14px, 3vw, 32px);
+  padding-top: max(clamp(16px, 3vh, 34px), env(safe-area-inset-top) + 12px);
+  padding-bottom: max(clamp(16px, 3vh, 34px), env(safe-area-inset-bottom) + 12px);
+  padding-left: max(clamp(14px, 3vw, 32px), env(safe-area-inset-left) + 14px);
+  padding-right: max(clamp(14px, 3vw, 32px), env(safe-area-inset-right) + 14px);
 }
 
 /* ── Columna de marca ── */
