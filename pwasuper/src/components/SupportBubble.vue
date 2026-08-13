@@ -199,6 +199,24 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
+// Alto real de la zona segura superior (notch/isla dinámica/barra de estado)
+// en píxeles. env() no se puede leer directo desde JS, así que se mide con
+// un elemento oculto que sí puede usar la variable de entorno en su CSS.
+function medirSafeTopPx() {
+  const probe = document.createElement('div')
+  probe.style.cssText = 'position:fixed;top:0;left:0;height:env(safe-area-inset-top,0px);width:1px;visibility:hidden;pointer-events:none;'
+  document.body.appendChild(probe)
+  const px = probe.getBoundingClientRect().height
+  probe.remove()
+  return px
+}
+
+// La burbuja (fija o arrastrada) nunca debe quedar por debajo de esto,
+// o vuelve a pisar el reloj/batería/isla dinámica del celular.
+function minYSeguro() {
+  return medirSafeTopPx() + 8
+}
+
 const props = defineProps({
   showNotificationBadge: {
     type: Boolean,
@@ -418,15 +436,16 @@ const startDrag = (event) => {
 
 const onDrag = (event) => {
   if (!isDragging.value) return
-  
+
   event.preventDefault()
   const clientX = event.type.includes('touch') ? event.touches[0].clientX : event.clientX
   const clientY = event.type.includes('touch') ? event.touches[0].clientY : event.clientY
-  
-  // Calcular nueva posición absoluta
+
+  // Calcular nueva posición absoluta, sin permitir que entre a la zona
+  // segura superior mientras se arrastra (no solo al soltar).
   position.value = {
     x: clientX - dragStart.value.x,
-    y: clientY - dragStart.value.y
+    y: Math.max(minYSeguro(), clientY - dragStart.value.y)
   }
 }
 
@@ -449,10 +468,11 @@ const endDrag = (event) => {
   const safeMargin = 8 // Reducido de 24px a 8px para estar más cerca de las esquinas
   const screenHeight = window.innerHeight
   const bubbleSize = 56 // 14 * 4 = 56px (w-14 h-14)
-  
+
   let finalY = position.value.y
-  // Asegurar que esté dentro de los límites seguros de la pantalla
-  finalY = Math.max(safeMargin, Math.min(screenHeight - bubbleSize - safeMargin, finalY))
+  // Asegurar que esté dentro de los límites seguros de la pantalla; arriba
+  // el límite es el notch/isla dinámica, no un margen fijo de 8px.
+  finalY = Math.max(minYSeguro(), Math.min(screenHeight - bubbleSize - safeMargin, finalY))
   
   // Actualizar estado - la burbuja se pegará al lado correspondiente
   isOnRight.value = shouldBeOnRight
@@ -508,7 +528,8 @@ const loadSavedPosition = () => {
       const { isOnRight: savedIsOnRight, customY: savedCustomY } = JSON.parse(saved)
       isOnRight.value = savedIsOnRight
       if (savedCustomY !== undefined) {
-        customY.value = savedCustomY
+        // Por si la posición se guardó antes de respetar la zona segura.
+        customY.value = Math.max(minYSeguro(), savedCustomY)
       }
     }
     
@@ -524,7 +545,13 @@ const loadSavedPosition = () => {
 
 onMounted(() => {
   loadSavedPosition()
-  
+  // Cubre también el caso sin posición guardada (el valor inicial por
+  // defecto, 120px, podría no bastar en algún dispositivo con isla/notch
+  // más alto de lo habitual).
+  if (customY.value !== null) {
+    customY.value = Math.max(minYSeguro(), customY.value)
+  }
+
   // Solo mostrar si no está completamente oculta y autoShow está activado
   if (props.autoShow && !isCompletelyHidden.value) {
     setTimeout(() => {

@@ -126,7 +126,7 @@
     <!-- Burbuja principal (posición fija lado derecho) -->
     <div
       v-if="!props.hideOnLoginPage"
-      class="fixed z-50 top-4 right-4"
+      class="support-bubble-fab fixed z-50 right-4"
     >
       <!-- Botón principal de la burbuja -->
       <button
@@ -201,7 +201,10 @@ const baseStyles = {
 // Posición del panel (siempre en la esquina superior derecha)
 const panelStyle = computed(() => {
   return {
-    top: '4.5rem',
+    // Debe bajar lo mismo que .support-bubble-fab (1rem + zona segura) más
+    // la altura del botón (3rem) y el hueco entre ambos (0.5rem), si no el
+    // panel se abre desalineado del botón que lo activó.
+    top: 'calc(4.5rem + env(safe-area-inset-top, 0px))',
     right: '1rem',
     ...baseStyles
   }
@@ -217,6 +220,13 @@ const handleContactClick = () => {
 </script>
 
 <style scoped>
+/* La burbuja es fixed sobre toda la pantalla (login/register/recuperar),
+   así que necesita el mismo respeto por el notch/isla dinámica que el
+   resto del sistema de autenticación, o queda pegada al reloj/batería. */
+.support-bubble-fab {
+  top: calc(1rem + env(safe-area-inset-top, 0px));
+}
+
 /* Animación del fondo difuminado */
 .backdrop-fade-enter-active, .backdrop-fade-leave-active {
   transition: all 0.3s ease;
