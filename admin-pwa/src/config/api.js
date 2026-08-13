@@ -1,45 +1,18 @@
-// Configuración de API para diferentes entornos
-const API_CONFIGS = {
-  production: {
-    baseURL: 'https://apipwa.sembrandodatos.com',
-    endpoints: {
-      adminLogin: '/admin/login',
-      authMe: '/auth/me',
-      usuarios: '/usuarios',
-      // Otros endpoints según la API de producción
-    }
-  },
-  local: {
-    baseURL: 'http://localhost:8000',
-    endpoints: {
-      adminLogin: '/admin/login',
-      authMe: '/auth/me',
-      usuarios: '/admin/usuarios',
-      // Endpoints locales con rutas completas
-    }
-  }
+// Configuración de API — la URL base viene siempre de VITE_API_URL (.env),
+// nunca hardcodeada. Antes esta constante apuntaba fija al backend de otro
+// proyecto (apipwa.sembrandodatos.com, el de PWASV) y el login del admin de
+// SADER fallaba porque golpeaba una API que no es la suya.
+const endpoints = {
+  adminLogin: '/admin/login',
+  authMe: '/auth/me',
+  usuarios: '/usuarios',
 }
 
-// Detectar automáticamente el entorno
-const getEnvironment = () => {
-  const hostname = window.location.hostname
-  
-  // FORZAR PRODUCCION - Siempre usar API de producción
-  return 'production'
-  
-  // Código original comentado (para desarrollo local):
-  // if (hostname === 'localhost' || hostname === '127.0.0.1') {
-  //   return 'local'
-  // }
-  // return 'production'
-}
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8002'
 
-// Exportar configuración del entorno actual
-const currentEnv = getEnvironment()
-export const API_CONFIG = API_CONFIGS[currentEnv]
-export const API_URL = API_CONFIG.baseURL
+export const API_CONFIG = { baseURL, endpoints }
+export const API_URL = baseURL
 
-console.log(`🌍 Entorno API: ${currentEnv}`)
 console.log(`🔗 API URL: ${API_URL}`)
 
 export default API_CONFIG
