@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SADER · Sistema de diseño de autenticación
+   Agricultura · Sistema de diseño de autenticación
    Tokens y primitivas compartidas por Login, Register y ForgotPassword.
    Prefijo `au-` para evitar colisiones con Tailwind y estilos heredados.
    ========================================================================== */
@@ -305,11 +305,13 @@
   align-items: center;
   line-height: 1.05;
   user-select: none;
+  max-width: 100%;
 }
 .au-wordmark b {
   font-weight: 800;
-  letter-spacing: 0.5px;
-  font-size: clamp(21px, 3vh, 28px);
+  letter-spacing: 0.2px;
+  font-size: clamp(18px, 2.4vh, 23px);
+  overflow-wrap: break-word;
   background: linear-gradient(120deg,
     var(--au-green-600) 0%, var(--au-green-500) 35%,
     var(--au-gold-deep) 50%,

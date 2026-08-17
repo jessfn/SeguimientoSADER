@@ -21,7 +21,7 @@
           </div>
 
           <span class="au-wordmark on-dark brand-mark">
-            <b>SADER</b>
+            <b>Agricultura</b>
             <small>App de Seguimiento</small>
           </span>
 
@@ -46,12 +46,12 @@
         <div class="au-card-wrap" :style="{ maxWidth: maxWidth }">
           <div class="au-card">
             <!-- Wordmark visible solo cuando la columna de marca está oculta -->
-            <span class="au-wordmark card-mark"><b>SADER</b></span>
+            <span class="au-wordmark card-mark"><b>Agricultura</b></span>
             <slot />
           </div>
         </div>
 
-        <p class="au-copy pane-copy">© 2026 SADER · Todos los derechos reservados</p>
+        <p class="au-copy pane-copy">© 2026 Agricultura · Todos los derechos reservados</p>
       </main>
     </div>
   </div>
@@ -131,7 +131,7 @@ defineProps({
 @keyframes au-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
 .brand-mark { align-items: flex-start; }
-.brand-mark :deep(b) { font-size: clamp(32px, 5.4vh, 48px); }
+.brand-mark :deep(b) { font-size: clamp(24px, 4vh, 34px); }
 .brand-mark :deep(small) { font-size: clamp(11px, 1.5vh, 13px); }
 
 .brand-desc {

@@ -626,7 +626,7 @@ const esRutaAuth = computed(() =>
             <PoinsettiaFlower class="flex-shrink-0" />
             <div class="min-w-0 flex-1">
               <h1 class="header-title text-xs mb-0 font-semibold leading-tight" style="color: #39ff14; letter-spacing: 0.02em;">
-                SADER
+                Agricultura
               </h1>
               <p class="text-[10px] text-gray-100 -mt-0.5 truncate max-w-full" :title="userName">{{ userName }}</p>
             </div>

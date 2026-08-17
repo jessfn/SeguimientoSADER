@@ -64,7 +64,7 @@
       </button>
     </form>
 
-    <p class="au-copy card-copy">© 2026 SADER · Panel de Administración</p>
+    <p class="au-copy card-copy">© 2026 Agricultura · Panel de Administración</p>
   </AuthLayout>
 </template>
 

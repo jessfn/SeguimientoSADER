@@ -14,7 +14,7 @@
       <div class="logo-container">
         <!-- Texto del logo con efecto de brillo -->
         <div class="logo-text">
-          <h1 class="brand-name">SADER</h1>
+          <h1 class="brand-name">Agricultura</h1>
           <p class="brand-tagline">App de Seguimiento</p>
           
           <!-- Información del usuario - Liquid glass, fondo fluido animado -->

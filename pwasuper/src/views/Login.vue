@@ -74,7 +74,7 @@
       <router-link to="/forgot-password" class="link-sm">¿Olvidaste tu contraseña?</router-link>
     </div>
 
-    <p class="au-copy card-copy">© 2026 SADER · Todos los derechos reservados</p>
+    <p class="au-copy card-copy">© 2026 Agricultura · Todos los derechos reservados</p>
     </AuthLayout>
 
     <SupportBubbleLogin />

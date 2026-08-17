@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "SADER: App de Seguimiento",
-  "short_name": "SADER",
+  "name": "Agricultura: App de Seguimiento",
+  "short_name": "Agricultura",
   "description": "Sistema de registro de asistencia y actividades con funcionalidad offline",
   "start_url": "/",
   "scope": "/",
